@@ -133,11 +133,77 @@ void run_server(struct ibv_device *device) {
         exit(1);
     }
 
-    printf("we made it so far\n");
-    ibv_close_device(context);
-    /* while(1) {                  */
+    /* RTR -> RTS */
 
-    /* } */
+    int attr_mask = (IBV_QP_STATE | IBV_QP_SQ_PSN | IBV_QP_MAX_QP_RD_ATOMIC | IBV_QP_RETRY_CNT \
+                     | IBV_QP_RNR_RETRY | IBV_QP_TIMEOUT);
+
+
+    struct ibv_qp_attr rts_attr;
+    memset(&rts_attr, 0, sizeof(rts_attr));
+    rts_attr.qp_state = IBV_QPS_RTS;
+    rts_attr.sq_psn = 0;
+    rts_attr.max_rd_atomic = 0;
+    rts_attr.retry_cnt = 7;
+    rts_attr.rnr_retry = 7;
+    rts_attr.timeout = 18;
+
+    ret = ibv_modify_qp(qp, &rts_attr, attr_mask);
+
+    if (ret) {
+        fprintf(stderr, "Failed to reach RTS state. %d:%s\n", errno, strerror(errno));
+        exit(1);
+    }
+
+
+    struct ibv_sge sge;
+    struct ibv_send_wr wr, *bad_wr;
+
+    memset(&wr, 0, sizeof(wr));
+
+    int mem_len = 0x100;
+    char *mem = malloc(mem_len); //TODO dealloc mem
+
+    strcpy(mem, "hello");
+
+    //mem = "hello";
+
+    struct ibv_mr *mr;
+
+    mr = ibv_reg_mr(pd, mem, mem_len, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE \
+                                      | IBV_ACCESS_REMOTE_READ); //TODO: need to deregister mr
+
+    sge.addr = (uintptr_t) mem;
+    sge.length = mem_len;
+    sge.lkey = mr->lkey;
+
+    //printf("we made it so far1\n");
+    if(!mr) {
+        fprintf(stderr, "Failed to register mr. %d:%s\n", errno, strerror(errno));
+        exit(1);
+    }
+
+    //printf("we made it so far2\n");
+
+    wr.wr_id = 0;
+    wr.sg_list = &sge;
+    wr.num_sge = 1;
+    wr.opcode = IBV_WR_SEND;
+    wr.send_flags = IBV_SEND_SIGNALED;
+
+    //printf("we made it so far3\n");
+    ret = ibv_post_send(qp, &wr, &bad_wr);
+
+    if (ret) {
+        fprintf(stderr, "ibv_post_send() failed. %d:%s\n", errno, strerror(errno));
+        exit(1);
+    }
+
+
+    printf("we made it so far\n");
+
+
+    ibv_close_device(context);
 }
 
 
@@ -156,7 +222,7 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    device = device_list[1];
+    device = device_list[0];
 
     run_server(device);
 

@@ -186,11 +186,32 @@ void run_server(struct ibv_device *device) {
 
     ret = ibv_post_recv(qp, &wr, &bad_wr);
 
+    int poll_cq_ret = 0;
     if (ret) {
         fprintf(stderr, "Failed to post WRs to receive Queue. %d:%s\n", errno, strerror(errno));
         exit(1);
     }
 
+    struct ibv_wc wc;
+    memset(&wc, 0, sizeof(wc));
+
+    do {
+
+        poll_cq_ret = ibv_poll_cq(cq, num_cqe, &wc);
+    } while(poll_cq_ret == 0);
+
+    if (poll_cq_ret < 0) {
+        fprintf(stderr, "Failed to poll cq. %d:%s\n", errno, strerror(errno));
+        exit(1);
+    }
+
+    if (wc.status != IBV_WC_SUCCESS) {
+        fprintf(stderr, "Failed status %s (%d)  for wr_id %d\n", ibv_wc_status_str(wc.status), \
+                                                                 wc.status, (int)wc.wr_id);
+        exit(1);
+    }
+
+    printf("we received: %s\n", mem);
     ret = ibv_dereg_mr(mr);
 
     if (ret) {
@@ -198,11 +219,7 @@ void run_server(struct ibv_device *device) {
         exit(1);
     }
 
-    printf("we made it so far\n");
     ibv_close_device(context);
-    /* while(1) {                  */
-
-    /* } */
 }
 
 
