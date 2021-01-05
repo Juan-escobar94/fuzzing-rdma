@@ -196,7 +196,6 @@ void run_server(struct ibv_device *device) {
     memset(&wc, 0, sizeof(wc));
 
     do {
-
         poll_cq_ret = ibv_poll_cq(cq, num_cqe, &wc);
     } while(poll_cq_ret == 0);
 
@@ -213,6 +212,8 @@ void run_server(struct ibv_device *device) {
 
     printf("we received: %s\n", mem);
     ret = ibv_dereg_mr(mr);
+
+    free(mem);
 
     if (ret) {
         fprintf(stderr, "Failed to deregister mr. %d:%s\n", errno, strerror(errno));
