@@ -7,3 +7,13 @@
 db.txt
 rdma-core
 rdma-core-install
+
+# tex generated files
+*.aux
+*.log
+*.fls
+*.toc
+*.bbl
+*.blg
+*.fdb_latexmk
+*.pdf
