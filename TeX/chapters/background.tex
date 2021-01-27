@@ -6,6 +6,7 @@
 
 
 \subsection{The Linux Kernel}
+
 Talk about the linux kernel being expandable by modules, which operate on
 so called 'kernel space' or privileged mode, this makes them in turn mandatory
 to be well tested, because  a malfunctioning module in this case a device 
@@ -13,15 +14,31 @@ driver a potential target inside the system.
 
 \subsection{Fuzzing}
 
+Software testing is a tool used used in software production pipelines, its main goal is to ensure proper program functioning. One common way to test programs is 
+positive testing, in which these are tested against expected inputs under well defined scenarious (test cases), to produce the desired results.
+Fuzzing is a technique used for negative testing, as opposite to the one just mentioned, in which the program is put under malformed or non-expected input. this
+has lead to the discovery of many bugs in the recent years (TODO: cite OSS website from lecture)
+
+
 \subsubsection{Types of Fuzzers}
  
-something something \cite{fetzer20}
+Fuzzers can be categorized into 3 main types\cite{fetzer20}:
 
+\begin{itemize}
+    \item Blackbox: no knowledge of target program internals, therefore they have no means of measuring coverage and can only provide input to the target.
+    \item Whitebox: these fuzzers rely on the knowledge of the source code of the target application, making them more efficient ( TODO: symbolic execution tools, model checkers that improve coverage, computed coverage guides the generator)
+    \item Graybox: a combination of both blackbox and whitebox types.
+\end{itemize}
+
+
+
+
+\subsubsection{Coverage and Depth}
 
 \subsubsection{Fuzzer components}
 
-Generator
+\paragraph{Generator}
 
-Delivery method
+\paragraph{Delivery method}
 
-Monitoring Framework
+\paragraph{Monitoring Framework}
