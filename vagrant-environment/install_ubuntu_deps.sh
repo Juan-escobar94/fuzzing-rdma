@@ -9,6 +9,7 @@ sudo apt install -y libnl-route-3-dev
 sudo apt install -y linux-modules-extra-$(uname -r)
 sudo apt install -y rdma-core
 sudo apt install -y libibnetdisc-dev
+sudo apt install -y infiniband-diags
 sudo apt install -y cmake
 sudo apt install -y python3-pip
 pip3 install cython
