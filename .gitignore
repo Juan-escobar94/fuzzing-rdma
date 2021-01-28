@@ -8,6 +8,12 @@ db.txt
 rdma-core
 rdma-core-install
 
+# private files
+meeting*
+*meeting
+*meeting*
+meeting.org
+
 # tex generated files
 *.aux
 *.log

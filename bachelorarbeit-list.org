@@ -6,7 +6,7 @@
 ** DONE install rdma core libraries
 ** DONE put header file definitions inside */usr/local/include*
 ** TODO install VM Hypervisor
-*** TODO KVM/QEMU/libvirt => works with vagrant guest aditions?
+*** TODO KVM/QEMU/libvirt => interface with host (files)
 *** DONE Oracle VM if the above does not work like expected.
 ** DONE install vagrant
 *** DONE install vbguest additions: =vagrant install plugin vagrant-vbguest=
@@ -21,24 +21,24 @@
 
 
 * Writing Related
-** TODO install zotero and login
+** DONE install zotero and login
 ** Remember to send Maksym every 2 weeks a draft.
-** TODO First Draft
+** IN-PROGRESS First Draft
 SCHEDULED: <2020-02-03 Mo>
-*** TODO write an outline for the draft
+*** IN-PROGRESS write an outline for the draft
 
 * more in-depth:
 ** TODO figure out a better optimized kernel configuration (that probably does not take > 30 min)
 *** right now the one compiling install touch screen modules, toshiba stuff... wtf. => really just need the infiniband stuff + minimum working config.
 ** TODO start playing with fuzzers:
 *** TODO Maksym suggested a grammar based fuzzer
-*** TODO try out AFL
-*** TODO try out syzkaller
-*** TODO re-read papers and find out their fuzzing approach.
+*** DONE try out AFL
+*** IN-PROGRESS try out syzkaller
+*** IN-PROGRESS re-read papers and find out their fuzzing approach.
 ** TODO recover somehow ioctl calls from rdma programs probably LD_PRELOAD trick?
 ** TODO figure out how to work with the options compiled into the kernel.
 *** [ ] KASAN
-*** [ ] Code coverage
+*** [ ] Code coverage (KCOV)
 ** an interesting question is how to approach fuzzing code delivery. Ideas : SSH | RPC | IPC | CONFIG FILES?
 *** restarting vm everytime it crashes is not really acceptable
 *** maybe reaload snapshots on crash? will this be faster?
