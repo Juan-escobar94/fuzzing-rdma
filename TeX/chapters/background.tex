@@ -1,26 +1,69 @@
 \section{Background}
 
 
-
-\subsection{RDMA Technology}
-
-
 \subsection{The Linux Kernel}
 
-Talk about the linux kernel being expandable by modules, which operate on
-so called `kernel space` or privileged mode, this makes them in turn mandatory
-to be well tested, because  a malfunctioning module in this case a device 
-driver a potential target inside the system.
+% Linux distributions
 
-In order to get a working configuration for the target kernel, the kernel was built using make defconfig and make kvmconfig (TODO: research this config options to explain them)
+One of the main features of the linux kernel is its ability to extend 
+its functionality at runtime. Pieces of code that can be added (or removed) to the kernel 
+while it is up and running are called moules. Each module is made of object code that can 
+be dynamically linked with the insmod or modprobe executables.\cite{ldd3}, 
+
+
+Security checks in linux are enforced in the kernel code, if there are security holes inside
+the kernel, then the whole system has security holes \cite{ldd3}
+
+% Talk about the linux kernel being expandable by modules, which operate on
+% so called `kernel space` or privileged mode, this makes them in turn mandatory
+% to be well tested, because a malfunctioning module in this case a device 
+% driver a potential target inside the system.
+
+In order to get a working configuration for the target kernel, the kernel was built using make 
+defconfig and make kvmconfig (TODO: research this config options to explain them)
 kvmconfig sets values like config\_hypervisor\_guest=y
 
-build the kernel using -j\$(nproc), using -j creates a thread for every subdirectory in the kernel tree, which can cause the machine to become unresponsive and take a much
-longer time to complete the build. \cite{kroah-hartman06}
+build the kernel using -j\$(nproc) as a parameter for make inside the main source directory
+inside the kernel source tree, after going after the proper configuration, using -j creates a 
+thread for every subdirectory in the kernel tree, which can cause the machine to become 
+unresponsive and take a much longer time to complete the build. \cite{kroah-hartman06}
+
+\subsection{RDMA with Infiniband}
+
+InfiniBand (IB) is a network architecture which provides very efficient and scalable server and storage interconnect
+technology, which is capable of supporting Remote Direct Memory Access (RDMA). the IB technology enables data 
+transmission between servers without needing CPU intervention,reducing in this way communication overhead, providing 
+speeds going up to 56Gb/s per port\cite{rdmamanual}.
+
+% TODO: Maksym: virtual protocol interface?
+
+\paragraph{RDMA over Converged Ethernet (RoCE)}
+
+RoCE is a standard for RDMA over Ethernet, which allows leveraging RDMA semantics over an Ethernet network without needing
+to resort to TCP transport. According to \cite{rdmamanual} RoCE provided the most efficient low lattency Ethernet
+solution to the day of (their?) writing (in 2015).
+
+\paragraph{Rxe: Soft-RoCE}
+
+Soft-RoCE (short rxe) is a software implementation of the RDMA transport (over Ethernet), it has been developed as a github 
+community project, with help from IBM, Mellanox and other companies.It has been part of the kernel since version 4.8.
+This software driver provides us an uncomplicated manner to test RDMA technologies without needing to use real hardware, it provides a complete 
+RDMA stack implementation over any NIC \cite{mellanox-community}.
+
+running \\ \$ modinfo rdma\_rxe \\ inside the shell, reveals that this module depends on the following modules: ib\_core, ip6\_udp\_tunnel, udp\_tunnel, ib\_uverbs 
+
+all which are as well loaded into the kernel when issuing the command \\ \$ modprobe rdma\_rxe \\
+modprobe loads a module into the kernel, while also loading the modules on which it depends on \cite{ldd3}.
+
+% To get Soft-RoCE capabilities, you need to install the kernel and user space libraries on both servers:
+% We are mainly interested in the rdma\_rxe kernel module, Software RDMA over Ethernet, provides a software implementation of the RoCEv2 Protocol, cite manpages.
+
+% rdma so cool \cite{rdmamanual} also take a look at \cite{bedeir10}
+% also look at \cite{intro-ib}
 
 \subsection{Fuzzing}
 
-Software testing is a tool used used in software production pipelines, its main goal is to ensure proper program functioning. One common way to test programs is 
+Software testing is a tool used in software production pipelines, its main goal is to ensure proper program functioning. One common way to test programs is 
 positive testing, in which these are tested against expected inputs under well defined scenarious (test cases), to produce the desired results.
 Fuzzing is a technique used for negative testing, as opposite to the one just mentioned, in which the program is put under malformed or non-expected input. this
 has lead to the discovery of many bugs in the recent years (TODO:\@ cite OSS website from lecture)
@@ -37,8 +80,6 @@ Fuzzers can be categorized into 3 main types\cite{fetzer20}:
 \end{itemize}
 
 
-
-
 \subsubsection{Coverage and Depth}
 
 \subsubsection{Fuzzer components}
@@ -48,3 +89,13 @@ Fuzzers can be categorized into 3 main types\cite{fetzer20}:
 \paragraph{Delivery method}
 
 \paragraph{Monitoring Framework}
+
+\subsubsection{Fuzzing Opensource Projects}
+
+\paragraph{AFL}
+
+\paragraph{Libfuzzer}
+
+\paragraph{Syzkaller}
+
+\paragraph{kAFL}
