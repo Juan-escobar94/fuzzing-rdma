@@ -1,6 +1,5 @@
 \section{Background}
 
-
 \subsection{The Linux Kernel}
 
 % Linux distributions
@@ -10,7 +9,6 @@ its functionality at runtime. Pieces of code that can be added (or removed) to t
 while it is up and running are called moules. Each module is made of object code that can 
 be dynamically linked with the insmod or modprobe executables.\cite{ldd3}, 
 
-
 Security checks in linux are enforced in the kernel code, if there are security holes inside
 the kernel, then the whole system has security holes \cite{ldd3}
 
@@ -19,23 +17,40 @@ the kernel, then the whole system has security holes \cite{ldd3}
 % to be well tested, because a malfunctioning module in this case a device 
 % driver a potential target inside the system.
 
-In order to get a working configuration for the target kernel, the kernel was built using make 
-defconfig and make kvmconfig (TODO: research this config options to explain them)
-kvmconfig sets values like config\_hypervisor\_guest=y
 
-build the kernel using -j\$(nproc) as a parameter for make inside the main source directory
-inside the kernel source tree, after going after the proper configuration, using -j creates a 
-thread for every subdirectory in the kernel tree, which can cause the machine to become 
-unresponsive and take a much longer time to complete the build. \cite{kroah-hartman06}
+% TODO: explain that the kernel can be built with different configurations 
+
+In order to get a a custom kernel configuration that suits the needs of this work,
+the latest stable release (5.10.11 at the time of writing) was downloaded from kernel.org,
+the downloaded bundle contains the entire source code (called source tree) for the linux kernel.
+
+With this source tree, one can create a linux kernel, tailored down to a specific use case. In 
+this scenario we want to enable support for the InfiniBand network stack, virtualization and 
+also builtin functionality that will come to aid during the fuzzing process, the following are worth
+mentioning:
+
+\begin{itemize}
+    \item KCOV: code coverage % TODO:
+    \item KASAN: kernel adress sanitizer ... % TODO:
+\end{itemize}
+
+There are some requirements to build the kernel, the list of programs needed for compiling the kernel are
+listed under \cite{minreqskernel}.
+
+inside the kernel source tree main directory, running make causes the kernel build system to use the configuration 
+described inside a file named .config to build a kernel and all modules needed to support that configuration 
+\cite{kroah-hartman06}.
 
 \subsection{RDMA with Infiniband}
+
+% TODO: is this necesary? are we using specifically InfiniBand technology? => modules are listed under /drivers/infiniband, so Ill guess yes
 
 InfiniBand (IB) is a network architecture which provides very efficient and scalable server and storage interconnect
 technology, which is capable of supporting Remote Direct Memory Access (RDMA). the IB technology enables data 
 transmission between servers without needing CPU intervention,reducing in this way communication overhead, providing 
 speeds going up to 56Gb/s per port\cite{rdmamanual}.
 
-% TODO: Maksym: virtual protocol interface?
+% TODO: Maksym: Should I talk about virtual protocol interface (VPI)?
 
 \paragraph{RDMA over Converged Ethernet (RoCE)}
 
@@ -55,11 +70,13 @@ running \\ \$ modinfo rdma\_rxe \\ inside the shell, reveals that this module de
 all which are as well loaded into the kernel when issuing the command \\ \$ modprobe rdma\_rxe \\
 modprobe loads a module into the kernel, while also loading the modules on which it depends on \cite{ldd3}.
 
+
+% udev is a program that enables Linux to provide a persistent device-naming system
+% in the /dev directory \cite{kroah-hartman06}
+
 % To get Soft-RoCE capabilities, you need to install the kernel and user space libraries on both servers:
 % We are mainly interested in the rdma\_rxe kernel module, Software RDMA over Ethernet, provides a software implementation of the RoCEv2 Protocol, cite manpages.
 
-% rdma so cool \cite{rdmamanual} also take a look at \cite{bedeir10}
-% also look at \cite{intro-ib}
 
 \subsection{Fuzzing}
 
@@ -68,6 +85,7 @@ positive testing, in which these are tested against expected inputs under well d
 Fuzzing is a technique used for negative testing, as opposite to the one just mentioned, in which the program is put under malformed or non-expected input. this
 has lead to the discovery of many bugs in the recent years (TODO:\@ cite OSS website from lecture)
 
+The term Fuzzing was coined by Miller, as ... \
 
 \subsubsection{Types of Fuzzers}
  

@@ -27,6 +27,14 @@
 SCHEDULED: <2020-02-03 Mo>
 *** IN-PROGRESS write an outline for the draft
 
+
+* Look into (interesting links):
+** ib_uverbs kernel module (creates uverbs* char devices) https://android.googlesource.com/kernel/common/+/bcmdhd-3.10/Documentation/infiniband/user_verbs.txt
+** libibverbs: https://github.com/linux-rdma/rdma-core/blob/master/Documentation/libibverbs.md
+*** refers to InfiniBand Architecture Specification vol1, especially chapter 11
+** SoftRoCE mellanox blog: https://blog.mellanox.com/2015/06/ethernet-just-got-big-performance-boost-with-release-soft-roce/
+** RoCE v1 vs v2
+
 * more in-depth:
 ** TODO figure out a better optimized kernel configuration (that probably does not take > 30 min)
 *** right now the one compiling install touch screen modules, toshiba stuff... wtf. => really just need the infiniband stuff + minimum working config.
