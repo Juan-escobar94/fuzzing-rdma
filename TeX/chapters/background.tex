@@ -3,14 +3,13 @@
 \subsection{The Linux Kernel}
 
 % Linux distributions
-
 One of the main features of the linux kernel is its ability to extend 
 its functionality at runtime. Pieces of code that can be added (or removed) to the kernel 
 while it is up and running are called moules. Each module is made of object code that can 
-be dynamically linked with the insmod or modprobe executables.\cite{ldd3}, 
+be dynamically linked with the insmod or modprobe executables\cite{ldd3}. 
 
-Security checks in linux are enforced in the kernel code, if there are security holes inside
-the kernel, then the whole system has security holes \cite{ldd3}
+Security checks in linux are enforced in the kernel code, if there are security vulnerabilities inside
+the kernel, then the whole system has vulnerabilities.\cite{ldd3}
 
 % Talk about the linux kernel being expandable by modules, which operate on
 % so called `kernel space` or privileged mode, this makes them in turn mandatory
@@ -20,55 +19,52 @@ the kernel, then the whole system has security holes \cite{ldd3}
 
 % TODO: explain that the kernel can be built with different configurations 
 
-In order to get a a custom kernel configuration that suits the needs of this work,
-the latest stable release (5.10.11 at the time of writing) was downloaded from kernel.org,
-the downloaded bundle contains the entire source code (called source tree) for the linux kernel.
-
-With this source tree, one can create a linux kernel, tailored down to a specific use case. In 
-this scenario we want to enable support for the InfiniBand network stack, virtualization and 
+When compiling the linux kernel, we want to enable support for the InfiniBand network stack, virtualization and 
 also builtin functionality that will come to aid during the fuzzing process, the following are worth
 mentioning:
 
 \begin{itemize}
-    \item KCOV: code coverage % TODO:
-    \item KASAN: kernel adress sanitizer ... % TODO:
+    \item Kcov: Code coverage for fuzzing. From \cite{kerneldocs-kcov} Kvoc exposes kernel code coverage information in a form suitable\
+    for coverage-guided fuzzing (randomized testing). Coverage data of a running kernel is exported via\
+    a debugfs file called kcov. % TODO:
+    % NOTE ON KCOV profiling data will only become accesibleonce debugfs has been mounted mount -t debugfs none /sys/kernel/debug
+    \item KASAN: The Kernel Address Sanitizer is a dynamic memory error detector. It provides\
+    information for finding use-after-free and out-of-bound bugs, it uses compiler generated\
+    instrumentation code to check every memory access \cite{kerneldocs-kasan} % TODO:
 \end{itemize}
-
-There are some requirements to build the kernel, the list of programs needed for compiling the kernel are
-listed under \cite{minreqskernel}.
-
-inside the kernel source tree main directory, running make causes the kernel build system to use the configuration 
-described inside a file named .config to build a kernel and all modules needed to support that configuration 
-\cite{kroah-hartman06}.
 
 \subsection{RDMA with Infiniband}
 
-% TODO: is this necesary? are we using specifically InfiniBand technology? => modules are listed under /drivers/infiniband, so Ill guess yes
-
-InfiniBand (IB) is a network architecture which provides very efficient and scalable server and storage interconnect
-technology, which is capable of supporting Remote Direct Memory Access (RDMA). the IB technology enables data 
-transmission between servers without needing CPU intervention,reducing in this way communication overhead, providing 
-speeds going up to 56Gb/s per port\cite{rdmamanual}.
-
-% TODO: Maksym: Should I talk about virtual protocol interface (VPI)?
-
-\paragraph{RDMA over Converged Ethernet (RoCE)}
-
 RoCE is a standard for RDMA over Ethernet, which allows leveraging RDMA semantics over an Ethernet network without needing
-to resort to TCP transport. According to \cite{rdmamanual} RoCE provided the most efficient low lattency Ethernet
-solution to the day of (their?) writing (in 2015).
-
+to resort to TCP transport. 
+% According to \cite{rdmamanual} RoCE provided the most efficient low lattency Ethernet solution to the day of (their?) writing (in 2015).
+% TODO: maksym => just say that RoCE is generally cheaper because it does not require specialized switches.
 \paragraph{Rxe: Soft-RoCE}
 
-Soft-RoCE (short rxe) is a software implementation of the RDMA transport (over Ethernet), it has been developed as a github 
-community project, with help from IBM, Mellanox and other companies.It has been part of the kernel since version 4.8.
-This software driver provides us an uncomplicated manner to test RDMA technologies without needing to use real hardware, it provides a complete 
-RDMA stack implementation over any NIC \cite{mellanox-community}.
+Soft-RoCE is a software implementation of the RDMA transport (over Ethernet), it has been developed as a github 
+community project, with help from IBM, Mellanox and other companies.This software driver provides us an 
+uncomplicated manner to test RDMA technologies without needing to use real hardware, it provides a complete RDMA 
+stack implementation over any NIC \cite{mellanox-community}.
 
-running \\ \$ modinfo rdma\_rxe \\ inside the shell, reveals that this module depends on the following modules: ib\_core, ip6\_udp\_tunnel, udp\_tunnel, ib\_uverbs 
+% running \\ \$ modinfo rdma\_rxe \\ inside the shell, reveals that this module depends on the following modules: ib\_core, ip6\_udp\_tunnel, udp\_tunnel, ib\_uverbs 
+% all which are as well loaded into the kernel when issuing the command \\ \$ modprobe rdma\_rxe \\
+% modprobe loads a module into the kernel, while also loading the modules on which it depends on \cite{ldd3}.
+% TODO: Maksym => this definitely does not go into the main body of the text, if you are so eager to conclude it, use appendecies.
 
-all which are as well loaded into the kernel when issuing the command \\ \$ modprobe rdma\_rxe \\
-modprobe loads a module into the kernel, while also loading the modules on which it depends on \cite{ldd3}.
+% udev is a program that enables Linux to provide a persistent device-naming system
+% in the /dev directory \cite{kroah-hartman06}
+
+% To get Soft-RoCE capabilities, you need to install the kernel and user space libraries on both servers:
+% We are mainly interested in the rdma\_rxe kernel module, Software RDMA over Ethernet, provides a software implementation of the RoCEv2 Protocol, cite manpages.
+
+
+% TODO: is this necesary? are we using specifically InfiniBand technology? => modules are listed under /drivers/infiniband, so Ill guess yes
+
+
+% running \\ \$ modinfo rdma\_rxe \\ inside the shell, reveals that this module depends on the following modules: ib\_core, ip6\_udp\_tunnel, udp\_tunnel, ib\_uverbs 
+
+% all which are as well loaded into the kernel when issuing the command \\ \$ modprobe rdma\_rxe \\
+% modprobe loads a module into the kernel, while also loading the modules on which it depends on \cite{ldd3}.
 
 
 % udev is a program that enables Linux to provide a persistent device-naming system
@@ -85,8 +81,6 @@ positive testing, in which these are tested against expected inputs under well d
 Fuzzing is a technique used for negative testing, as opposite to the one just mentioned, in which the program is put under malformed or non-expected input. this
 has lead to the discovery of many bugs in the recent years (TODO:\@ cite OSS website from lecture)
 
-The term Fuzzing was coined by Miller, as ... \
-
 \subsubsection{Types of Fuzzers}
  
 Fuzzers can be categorized into 3 main types\cite{fetzer20}:
@@ -100,15 +94,82 @@ Fuzzers can be categorized into 3 main types\cite{fetzer20}:
 
 \subsubsection{Coverage and Depth}
 
+Coverage and depths are metrics which may guide fuzzers during the input generation stage.
+Coverage is measured by the number of basic blocks touched/passed by the execution under a certain input.
+Depth is defined in the context of layers of the software stack, as an example, a RESTful server may 
+ignore all other http requests than GET, this GET requests may trigger for example, a database query \cite{fetzer20}
+
 \subsubsection{Fuzzer components}
 
 \paragraph{Generator}
 
-\paragraph{Delivery method}
+A Fuzz generator is in charge of creating test inputs to run on the system under test. Different 
+approaches serve this purpose\cite{mcnally12}:
 
-\paragraph{Monitoring Framework}
+\begin{itemize}
+    \item Mutative: the idea is to start with a sample input or a set of inputs (also called corpus), and \
+    modify a part of it. It proves useful for inputs that must conform to defined structures, coverage is not
+    always good. A positive aspect of this type of generators is that they do not require protocol knowledge.
+    \item Generative: generate inputs from scratch. This can yield higher coverages, at the cost of requiring
+    knowledge of protocols. It can be based on templates or grammars.
+\end{itemize}
 
-\subsubsection{Fuzzing Opensource Projects}
+These two main categories can be further described by the techniques used to generate their data: 
+
+\begin{itemize}
+    \item Oblivious: generates or mutates data randomly, this brings of course poor coverage.
+    \item Template based: provided an input template, the fuzzer will only modify/generate specific parts \
+    allowed by the template.
+    \item Block based: represent data as nested data blocks of varying types as opposed to string sequences.
+    \item Grammar based: make use of a previously given grammar, to generate input. 
+    \item Protocol fuzzer: knows about concepts such as replies and responses, and in which \
+    sequence to reply responses in order to test certain functionality.  
+\end{itemize}
+
+Generation or Mutation based on coverage is described by the algorithm in listing (Insert Number Here). 
+
+\begin{lstlisting}
+# First step: acquire initial corpus
+while(True):
+    MutateCorpus()
+    Run(newInputs)
+    if (coverage > coverageOld)  Corpus.add(newInput)
+\end{lstlisting}
+
+
+\paragraph{Delivery Mechanisms}
+
+A delivery mechanism is a fuzzer component which is in charge of presenting input (from the generator) 
+to the system under test. Normally, as finding abnormal functioning during regular operation of the
+target program is aimed at, Fuzzers use delivery mechanisms simulate those used by the system under test \cite{mcnally12}
+
+Delivery mechanisms are usually one of:
+
+\begin{itemize}
+    \item Files
+    \item Environment variables
+    \item Invocation parameters (command-line or API)
+    \item Network transmissions
+    \item Operating system events (including mouse and keyboard events)
+    \item Operating system resources 
+    \item Direct memory injection (risk to corrupt state and abort program)
+\end{itemize}
+
+(TODO: expand more on this based on which one is chosen)
+
+\paragraph{Monitoring Frameworks}
+
+Detecting that the system under test has crashed as a result of some input is essential to the fuzzing process.
+There are two broad classes of monitoring frameworks\cite{mcnally12}:
+
+\begin{itemize}
+    \item Local monitoring: the fuzzer is installed in the same system as the target. It may look for additional output \
+    from the target (such as core dump files) in order to assert that the target has encountered errors.
+    \item Remote monitoring: more limited that their counterpart by nature, remote monitowring frameworks recognize \
+    a failure by looking for network interruptions.
+\end{itemize}
+
+\subsubsection{Fuzzing Projects}
 
 \paragraph{AFL}
 
