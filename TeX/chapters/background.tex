@@ -155,7 +155,7 @@ Delivery mechanisms are usually one of:
     \item Direct memory injection (risk to corrupt state and abort program)
 \end{itemize}
 
-(TODO: expand more on this based on which one is chosen)
+% (TODO: expand more on this based on which one is chosen)
 
 \paragraph{Monitoring Frameworks}
 
@@ -169,12 +169,46 @@ There are two broad classes of monitoring frameworks\cite{mcnally12}:
     a failure by looking for network interruptions.
 \end{itemize}
 
-\subsubsection{Fuzzing Projects}
+\subsubsection{Fuzzers}
+
+There are well over dozens of open source fuzzing tools and libraries \cite{awesome-fuzzing}, but the purpose of this work, the following
+are well worth mentioning:
+% TODO: in each section, why not chosen.
+
 
 \paragraph{AFL}
 
+The American Fuzzy Lop fuzzer is a brute force fuzzer that uses instrumentation guided coverage to 
+efficiently fuzz the system under test \cite{afl}. AFL can operate as a white-box fuzzer (source code is available)
+to achieve best results, this requires compiling the source code with a drop in replacement for gcc/clang
+called afl-gcc. 
+
+
 \paragraph{Libfuzzer}
+
+Libfuzzer is a coverage guided evolutionary fuzzing engine, it was designed with the intent to fuzz 
+libraries, feeding fuzzed inputs to an entry point (target function). In order to achieve this Libfuzzer
+is linked with the library under test. It can be combined with AFL for example, this would require both processes to be 
+periodically restarted in order to 'use' each others findings \cite{libfuzzer}. 
+
+
+\paragraph{kAFL}
+
+% problem: requires intel PT
+% TODO: clean up this section.
+
+As AFL is limited to userspace and lacks support for kernel space\cite{kafl}, kAFL was designed with overcoming 
+the obstacles that are inherent when fuzzing kernels: kernel crashes (panics) usually make the host operating system
+unavailable, collecting coverage from a broken system is neither possible, nor perhaps desired.
+
+The inherent non-determinism in kernel level programs: kernel threads, statefulness and similar mechanisms. (libfuzzer)
+this makes fuzzing kernel code challenging.
+
+coverage information is provided by Intel's Processor Trace (PT) technology. Logic used to perform 
+mutations and scheduling closely resembles the one used in AFL\cite{kafl}
 
 \paragraph{Syzkaller}
 
-\paragraph{kAFL}
+Syzkaller is a fuzzing framework designed to fuzz kernels at the system call level. It operates on multiple 
+virtual machines and collects coverage information using KCOV. Syzkaller also comes with a systemcall specification
+language (syzlang), designed to aid in targetting specific subsystems inside kernels \cite{syzkaller}.

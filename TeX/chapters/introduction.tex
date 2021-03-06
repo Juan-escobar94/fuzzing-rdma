@@ -4,7 +4,24 @@
 % Computer Systems have become indispensable in our everyday life. Examples vary 
 % from A to B. As they play important roles in our lives, we expect them to be 
 % stable
-Hello world
 
-\subsection{Goals}
-Hello world 2
+Remote Direct Memory Access (RDMA) networks offer significant performance benefits by exposing the (network) device directly
+to the user application. On one hand RDMA-networks remove the operating system from the critical path of 
+communication. But on the other hand, the interface from the application to the operating system and from 
+the application to the device becomes significantly more complicated. In comparison to traditional sockets-based API, 
+such design increases the attack surface of the OS and the underlying network infrastructure.
+
+With the increasing adoption of RDMA-networks in cloud and HPC settings, the attacker models consider user applications 
+to be potentially malicious. Therefore, the interface between the application and the RDMA-network must be secure.
+The existing works have already shown fundamental problems in state-of-the art RDMA network architectures, but 
+have not yet studied the safety of the API itself. The goal of this work is to characterise the attack surface 
+created by the RDMA communication API.
+
+\subsection{Goal}
+
+The goal of this project is to characterise possible attack vectors coming through the RDMA API. Furthermore, the 
+project must propose measures to harden the attack surface. A promising approach for hardening RDMA API is to apply 
+fuzzing techniques aimed to find potential vulnerabilities in existing kernel-level RDMA-infrastructure. If such 
+direction is chosen, the student shall design a fuzzing infrastructure targeting RDMA devices or RDMA device 
+drivers. As such, the fuzzing infrastructure may rely on specifics of RDMA-network architectures to make bug-finding 
+more efficient.

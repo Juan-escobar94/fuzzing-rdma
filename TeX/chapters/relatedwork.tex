@@ -1,1 +1,9 @@
 \section{Related work}
+
+Mellanox has been working on defining the rdma subsystem using syzlang \cite{lpc-2018},
+which allows syzkaller to operate exclusively on this subsystem, in order to efficiently
+fuzz the rdma api implementation inside the linux kernel. 
+
+After testing syzkaller with the subset of system calls defined in the subsystem by ourselves, 
+over a hundred crashes ocurred, of which 3 of them were unique (2 kernel panics, 1 KASAN null pointer
+dereference report). 
