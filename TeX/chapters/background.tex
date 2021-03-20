@@ -1,11 +1,14 @@
 \section{Background}
 
+Before diving right into <>, some background about the details concerning the system under test
+are in order.
+
 \subsection{The Linux Kernel}
 
 % Linux distributions
 One of the main features of the linux kernel is its ability to extend 
-its functionality at runtime. Pieces of code that can be added (or removed) to the kernel 
-while it is up and running are called moules. Each module is made of object code that can 
+its functionality during runtime. Code that can be added (or removed) to the kernel
+while is running are called modules. Each module is made of object code that can
 be dynamically linked with the insmod or modprobe executables\cite{ldd3}. 
 
 Security checks in linux are enforced in the kernel code, if there are security vulnerabilities inside
@@ -126,14 +129,15 @@ These two main categories can be further described by the techniques used to gen
     sequence to reply responses in order to test certain functionality.  
 \end{itemize}
 
-Generation or Mutation based on coverage is described by the algorithm in listing (Insert Number Here). 
+Generation or Mutation based on coverage is described by the algorithm in listing~\ref{lst:genalg}.
 
-\begin{lstlisting}
+\begin{lstlisting}[caption={Coverage based data generation}, label={lst:genalg}, language=python]
 # First step: acquire initial corpus
 while(True):
     MutateCorpus()
     Run(newInputs)
     if (coverage > coverageOld)  Corpus.add(newInput)
+
 \end{lstlisting}
 
 
