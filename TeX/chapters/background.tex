@@ -1,5 +1,38 @@
 \section{Background}
 
+In the setting of modern data centers and HPC clusters, there have been numerous research efforts
+to enhance performance. Data Analytics applications that rely on machine and deep learning techniques demand
+tremendous workloads with their need for massive computing performance, and have led to the wide adoption of graphics
+processing units (GPU) accelerator and multicore (CPU) technologies, which are pushing current datacenter interconnect
+and memory architectures to their limit\cite{shalf19}.
+
+Furthermore, communication using conventional ethernet fabric is a severe inhibitor to efficient resource sharing.
+For emerging compute intensive and resource hungry applications, substantial increases in bandwidth are a necessity\cite{shalf19}.
+
+A shift towards high speed network fabrics has been proven useful,
+because it helps alleviaite the latencies that may arise from node to node communication.
+The usage of InfiniBand fabrics over Ethernet fabrics is common in such setting.
+
+The amount of time that a processor is engaged in the transmition or reception of a message, also known as overhead,
+can also play a major role in performance, since the processor cannot perform other operations.
+This is especially true for applications that are heavy on read/write operations, as they can
+be slowed down significantly by high oveheads.\cite{martin97}
+
+To tackle this problems, a common solution applied in industry is the usage of InfiniBand, which
+is a network architecture which supports Remote Direct Memory Access (RDMA).
+RDMA works by letting the Network Interface Card (NIC) and the User Application (more specifically, its memory)
+directly communicate with each other, therefore bypassing the Operating System (which is known for
+causing high overhead through context switches to kernel space) and thus offloading the CPU. This practice has been
+gaining traction in the HPC environment, aiding multiple machines to mitigate bottlenecks and efficiently act like a
+single large system.
+
+Taking advantage of the InfiniBand architecture requires specialized hardware, as the InfiniBand network architecture defines
+its own protocols for each network layer. Moreover, special NICs, which go by the name of Channel Adapters (CA) in the InfiniBand
+architecture are also required. Specifically, A CA is a programmable DMA engine which special protection features that allow
+DMA operations to be initated locally and remotely\cite{infinibandvol107}.
+
+
+
 %%  take again the main argument talking about softroce and its importance
 %%  with possibly more details.
 %%
@@ -21,8 +54,11 @@
 
 \subsection{The Linux Kernel}
 
-% Linux distributions
-One of the main features of the linux kernel is its ability to extend 
+It is pertinent to evaluate some aspects of linux and the kernel as the nature of
+the system in which the SoftRoCE driver operates, allows its code to operate
+under the most privileged level, along the kernel itself.
+
+One of the main features of the linux kernel is its ability to extend
 its functionality during runtime. Code that can be added (or removed) to the kernel
 while is running are called modules. Each module is made of object code that can
 be dynamically linked with the insmod or modprobe executables\cite{ldd3}. 
@@ -34,7 +70,6 @@ the kernel, then the whole system has vulnerabilities.\cite{ldd3}
 % so called `kernel space` or privileged mode, this makes them in turn mandatory
 % to be well tested, because a malfunctioning module in this case a device 
 % driver a potential target inside the system.
-
 
 % TODO: explain that the kernel can be built with different configurations 
 
