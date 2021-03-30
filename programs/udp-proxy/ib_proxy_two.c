@@ -136,7 +136,7 @@ int main (int argc, char** argv) {
     int sd_listen, sd_fw_toclient, sd_fw_toserv;
     struct addrinfo hints, *res;
 
-    struct addrinfo *res_client, *res_server;
+    struct addrinfo *res_client, *res_client_xch, *res_server, *res_server_xch;
 
     memset(&hints, 0, sizeof(hints));
     // AF_UNSPEC: use either IPv4 or IPv6
@@ -175,7 +175,7 @@ int main (int argc, char** argv) {
     freeaddrinfo(res);
 
 
-    status = getaddrinfo(NULL, "9000", &hints, &res_client);
+    status = getaddrinfo(NULL, "9001", &hints, &res_client);
     if (status != 0) {
       perror("getaddrinfo");
       exit(1);
@@ -187,6 +187,17 @@ int main (int argc, char** argv) {
       exit(1);
     }
 
+    status = getaddrinfo(NULL, "9003", &hints, &res_client_xch);
+    if (status != 0) {
+      perror("getaddrinfo");
+      exit(1);
+    }
+
+    int sd_fw_toclient_xch = socket(res_client_xch->ai_family, res_client_xch->ai_socktype, res_client_xch->ai_protocol);
+    if (sd_listen == -1) {
+      perror("socket");
+      exit(1);
+    }
 
     status = getaddrinfo(NULL, "8001", &hints, &res_server);
     if (status != 0) {
@@ -200,6 +211,17 @@ int main (int argc, char** argv) {
       exit(1);
     }
 
+    status = getaddrinfo(NULL, "8003", &hints, &res_server_xch);
+    if (status != 0) {
+      perror("getaddrinfo");
+      exit(1);
+    }
+
+    int sd_fw_toserv_xch = socket(res_server_xch->ai_family, res_server_xch->ai_socktype, res_server_xch->ai_protocol);
+    if (sd_listen == -1) {
+      perror("socket");
+      exit(1);
+    }
     fflush(stdout);
     char buf[4096];
     char* msg;
@@ -217,6 +239,7 @@ int main (int argc, char** argv) {
 
       char* p = &buf[0];
 
+      printf("received: %s\n", buf);
       fflush(stdout);
 
       /*
@@ -232,12 +255,18 @@ int main (int argc, char** argv) {
       if (!client_flag) {
         memcpy(pr.client_port, sender_port, sizeof pr.client_port);
         client_flag = 1;
+        printf("forwarding xch to server\n");
+        sendto(sd_fw_toserv_xch, &buf, sizeof buf, 0, (struct sockaddr*) res_server_xch->ai_addr, sizeof *(res_server_xch->ai_addr));
+        freeaddrinfo(res_server_xch);
       } else if (!server_flag) {
         memcpy(pr.server_port, sender_port, sizeof pr.server_port);
         server_flag = 1;
+        printf("forwarding xch to client\n");
+        sendto(sd_fw_toclient_xch, &buf, sizeof buf, 0, (struct sockaddr*) res_client_xch->ai_addr, sizeof *(res_client_xch->ai_addr));
+        freeaddrinfo(res_client_xch);
       }
         // incoming packet from client, forward to server
-        if(strcmp(pr.client_port, sender_port) == 0) {
+      else if(strcmp(pr.client_port, sender_port) == 0) {
           printf("forwarding to server\n");
           sendto(sd_fw_toserv, &buf, sizeof buf, 0, (struct sockaddr*) res_server->ai_addr, sizeof *(res_server->ai_addr));
         } else if (strcmp(pr.server_port, sender_port) == 0) {
