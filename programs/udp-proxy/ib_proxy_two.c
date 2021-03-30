@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -5,12 +6,14 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <unistd.h>
 
 typedef unsigned char uchar;
+#define BYTES_ICRC 4
+#define BYTES_FCS 1
 
-static inline void print_usage() {
-    printf("Usage: proxy src_port dst_port\n");
+
+static inline void print_usage(char *p) {
+    printf("Usage: %s port \n", p);
 }
 
 
@@ -39,7 +42,7 @@ struct ib_pkt {
 };
 
 struct pkt_tail {
-  long long icrc;
+  unsigned int icrc;
   uchar fcs;
 };
 
@@ -96,12 +99,22 @@ char* deserialize_ib_pkt(char* buffer, int buffer_len) {
   /*
    *  Now buffer should point to payload
    */
-  int ib_payload_len = buffer_len - (sizeof(ib_header) + padding_bytes);
+  int ib_payload_len = buffer_len - (sizeof(ib_header) + padding_bytes + \
+      BYTES_ICRC + BYTES_FCS);
+  printf("\tbuffer_len: %d, payload_len: %d\n", buffer_len, ib_payload_len);
+  fflush(stdout);
   char* payload = malloc(ib_payload_len);
   memcpy(payload, buffer, ib_payload_len);
 
   return start_addr;
 }
+
+
+struct ports_record {
+  char client_port[NI_MAXSERV];
+  char server_port[NI_MAXSERV];
+};
+
 
 
 /**
@@ -114,14 +127,17 @@ char* deserialize_ib_pkt(char* buffer, int buffer_len) {
 
 int main (int argc, char** argv) {
 
-    if (argc != 3) {
-       print_usage();
+    if (argc != 2) {
+       print_usage(argv[1]);
        exit(1); 
     }
-
+    struct ports_record pr;
     int status;
-    int sd_listen, sd_forward;
+    int sd_listen, sd_fw_toclient, sd_fw_toserv;
     struct addrinfo hints, *res;
+
+    struct addrinfo *res_client, *res_server;
+
     memset(&hints, 0, sizeof(hints));
     // AF_UNSPEC: use either IPv4 or IPv6
     // AF_INET: use IPv4
@@ -143,74 +159,111 @@ int main (int argc, char** argv) {
       perror("socket");
       exit(1);
     }
-    
-    int optval = 1;
-    setsockopt(sd_listen, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof optval);  
-
-
+  
     status = bind(sd_listen, res->ai_addr, res->ai_addrlen);
     if (status != 0) {
       perror("bind");
       exit(1);
     }
 
-    printf("ready to receive on addr %s", argv[1]);
+    printf("ready to receive on port %s\n", argv[1]);
     /*
      *
      * now prepare the data structures to forward the message
      *
      **/
     freeaddrinfo(res);
-    status = getaddrinfo(NULL, argv[2], &hints, &res);
+
+
+    status = getaddrinfo(NULL, "9000", &hints, &res_client);
     if (status != 0) {
       perror("getaddrinfo");
       exit(1);
     }
-    sd_forward = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+
+    sd_fw_toclient = socket(res_client->ai_family, res_client->ai_socktype, res_client->ai_protocol);
     if (sd_listen == -1) {
       perror("socket");
       exit(1);
     }
 
 
+    status = getaddrinfo(NULL, "8001", &hints, &res_server);
+    if (status != 0) {
+      perror("getaddrinfo");
+      exit(1);
+    }
+
+    sd_fw_toserv = socket(res_server->ai_family, res_server->ai_socktype, res_server->ai_protocol);
+    if (sd_listen == -1) {
+      perror("socket");
+      exit(1);
+    }
+
     fflush(stdout);
-    char buf[1024];
+    char buf[4096];
     char* msg;
     memset(&buf, 0, sizeof(buf));
     int received;
+    _Bool client_flag = 0;
+    _Bool server_flag = 0;
 
-    if(fork()) {
-      /* children, just forward pkt in reverse direction */
+    char sender_hostname[NI_MAXHOST];
+    char sender_port[NI_MAXSERV];
+    struct sockaddr_storage sender;
+    socklen_t sender_len = sizeof(struct sockaddr_storage);
+    while ((received = recvfrom(sd_listen, &buf, sizeof buf, 0, \
+                                (struct sockaddr*) &sender,  &sender_len)) != -1) {
 
-
-
-
-    } else {
-
-
-
-    while ((received = recvfrom(sd_listen, &buf, sizeof buf, 0, NULL, NULL)) != -1) {
       char* p = &buf[0];
-      while(*p != '\0') {
-        printf(" %x ", *p);
-        p++;
-      }
+
       fflush(stdout);
+
+      /*
+         *
+         * client is assumed to send the first packet, which should be then stored in a record
+         * struct, afterwards should be the server, stored in the same record. only fuzz packets
+         * incoming from the client after the connection has been succesfully set.
+         *
+         * */
+      getnameinfo((struct sockaddr*)&sender, sender_len, sender_hostname, sizeof sender_hostname, \
+                  sender_port, sizeof sender_port, NI_NUMERICHOST | NI_NUMERICSERV);
+
+      if (!client_flag) {
+        memcpy(pr.client_port, sender_port, sizeof pr.client_port);
+        client_flag = 1;
+      } else if (!server_flag) {
+        memcpy(pr.server_port, sender_port, sizeof pr.server_port);
+        server_flag = 1;
+      }
+        // incoming packet from client, forward to server
+        if(strcmp(pr.client_port, sender_port) == 0) {
+          printf("forwarding to server\n");
+          sendto(sd_fw_toserv, &buf, sizeof buf, 0, (struct sockaddr*) res_server->ai_addr, sizeof *(res_server->ai_addr));
+        } else if (strcmp(pr.server_port, sender_port) == 0) {
+          printf("forwarding to client\n");
+          sendto(sd_fw_toclient, &buf, sizeof buf, 0, (struct sockaddr*) res_client->ai_addr, sizeof *(res_client->ai_addr));
+        } else {
+          printf("unknown sender\n");
+        }
+
+
+
+
+
+
+
 
       /**
        *
-       * parse the IB packet before forwarding it again
+       * parse and fuzz the IB packet before forwarding it again
        *
        **/
-      // char* buffer_cp = &buf[0];
+      char* buffer_cp = &buf[0];
       // deserialize_ib_pkt(buffer_cp, received);
-
-
-      sendto(sd_forward, &buf, sizeof buf, 0, (struct sockaddr*) res->ai_addr, sizeof *(res->ai_addr));
       memset(&buf, 0, sizeof(buf));
     } 
 
-    }
 
     return 0;
 }
