@@ -108,9 +108,17 @@ void run_server(struct ibv_device *device, const char* db_file) {
     memset(qpn, 0, 10);
     sprintf(qpn, "%d", qp->qp_num);
 
-    xch_conn_inf_server("4791", qpn, gid.raw, &cinf);
+    xch_conn_inf_server("4793", qpn, gid.raw, &cinf);
 
-    printf("successfully got conn infos from client\n");
+    printf("got qpn: %d\n", cinf.qpn);
+    printf("got gid: ");
+
+    uint8_t *gid_p = cinf.gid;
+    for (int i = 1; i <= 16; i++) {
+        printf("%02X", (*gid_p) & 0xFF);
+        gid_p++;
+        if (i % 2 == 0) printf(" ");
+    }
 
     union ibv_gid their_gid;
     memset(&their_gid, 0, sizeof their_gid);

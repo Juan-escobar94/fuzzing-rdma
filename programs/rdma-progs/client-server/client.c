@@ -101,9 +101,18 @@ void run_client(struct ibv_device *device) {
     memset(qpn, 0, 10);
     sprintf(qpn, "%d", qp->qp_num);
     //sprintf(gid_send, "%s", gid.raw);
-    xch_conn_inf_client("4791", qpn, gid.raw, &cinf);
+    xch_conn_inf_client("4793", qpn, gid.raw, &cinf);
 
-    printf("successfully got infos from server\n");
+    printf("got qpn: %d\n", cinf.qpn);
+    printf("got gid: ");
+
+    uint8_t *gid_p = cinf.gid;
+    for (int i = 1; i <= 16; i++) {
+        printf("%02X", (*gid_p) & 0xFF);
+        gid_p++;
+        if (i % 2 == 0) printf(" ");
+    }
+
     union ibv_gid their_gid;
     memset(&their_gid, 0, sizeof their_gid);
 
