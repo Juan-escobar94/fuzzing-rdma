@@ -12,6 +12,8 @@ typedef unsigned char uchar;
 #define BYTES_FCS 1
 
 
+void print_buf_bytes(char *buf, int buf_size);
+
 static inline void print_usage(char *p) {
     printf("Usage: %s port \n", p);
 }
@@ -237,9 +239,10 @@ int main (int argc, char** argv) {
     while ((received = recvfrom(sd_listen, &buf, sizeof buf, 0, \
                                 (struct sockaddr*) &sender,  &sender_len)) != -1) {
 
-      char* p = &buf[0];
+      // char* p = &buf[0];
 
-      printf("received: %s\n", buf);
+      print_buf_bytes(buf, received);
+
       fflush(stdout);
 
       /*
@@ -252,6 +255,7 @@ int main (int argc, char** argv) {
       getnameinfo((struct sockaddr*)&sender, sender_len, sender_hostname, sizeof sender_hostname, \
                   sender_port, sizeof sender_port, NI_NUMERICHOST | NI_NUMERICSERV);
 
+      printf("from port %s\n", sender_port);
       if (!client_flag) {
         memcpy(pr.client_port, sender_port, sizeof pr.client_port);
         client_flag = 1;
@@ -295,4 +299,27 @@ int main (int argc, char** argv) {
 
 
     return 0;
+}
+
+void print_buf_bytes(char *buf, int buf_size) {
+
+  // dont modify the actual buf.
+  char *p = buf;
+  int bytes_range = 0x0000;
+  printf("received: \n");
+  int k = 0;
+  while ( k <= buf_size){
+    printf("%04X: ", bytes_range & 0xFFFF);
+    for (int i = 1; i <= 16; i++){
+      if (k >= buf_size) return;
+
+      printf("%02X", (*p) & 0xFF);
+      if (i % 2 == 0 ) printf(" ");
+      k++;
+      p++;
+    }
+    printf("\n");
+    bytes_range += 16;
+  }
+  printf("\n");
 }
