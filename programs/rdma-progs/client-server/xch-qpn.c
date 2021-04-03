@@ -71,7 +71,7 @@ int xch_conn_inf_server(char* bind_port, char *qpn, uint8_t *gid, struct conn_in
     char msg_send[100];
     status = prepare_msg(qpn, gid, msg_send, sizeof(msg_send));
 
-    if(!status) {
+    if(status != 0) {
         fprintf(stderr, "prepare_msg failed\n");
         goto err3;
     }
@@ -80,7 +80,7 @@ int xch_conn_inf_server(char* bind_port, char *qpn, uint8_t *gid, struct conn_in
 
     status = parse_conn_inf(msg_recv, received_len, cinf);
 
-    if(!status) {
+    if(status != 0) {
         fprintf(stderr, "parse_conn_inf failed\n");
         goto err3;
     }
@@ -151,7 +151,7 @@ int xch_conn_inf_client(char* bind_port, \
     char msg_send[100];
     status = prepare_msg(qpn, gid, msg_send, sizeof(msg_send));
 
-    if(!status) {
+    if(status != 0) {
         fprintf(stderr, "prepare_msg failed\n");
         goto err3;
     }
@@ -169,7 +169,7 @@ int xch_conn_inf_client(char* bind_port, \
 
     status = parse_conn_inf(msg_recv, received_len, cinf);
 
-    if(!status) {
+    if(status != 0) {
         fprintf(stderr, "parse_conn_inf failed\n");
         goto err3;
     }
@@ -189,7 +189,10 @@ err1:
 
 
 
-
+/*
+** TODO: just use the first 16 bytes for the gid, the next 2 for qpn.
+**
+*/
 static int prepare_msg(char* qpn, uint8_t * gid, char *msg, int msg_size){
     if (msg_size < 20) return 1;
 
