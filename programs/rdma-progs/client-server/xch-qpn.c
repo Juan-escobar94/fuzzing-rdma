@@ -190,32 +190,28 @@ err1:
 
 
 /*
-** TODO: just use the first 16 bytes for the gid, the next 2 for qpn.
-**
+** Msg consits of 16 bytes with gid followed by (usually) 2 bytes
+** which contain qpn
 */
 static int prepare_msg(char* qpn, uint8_t * gid, char *msg, int msg_size){
     if (msg_size < 20) return 1;
 
     memset(msg, 0, msg_size);
-    const char *str_gid ="gid:";
-
-    sprintf(msg, "%s", str_gid);
 
     char *p = msg;
-    while (*p != 0x00) p++;
 
     memcpy(p, gid, GID_RAW_SIZE);
 
     p += GID_RAW_SIZE;
 
-    sprintf(p, " qpn:%s", qpn);
+    sprintf(p, "%s", qpn);
     return 0;
 }
 
 
 static int parse_conn_inf(char* msg, int msg_size, struct conn_inf *cinf) {
 
-    if (msg_size < 20) {
+    if (msg_size < 18) {
         fprintf(stderr, "msg received is too short!\n");
         return 1;
 
@@ -223,7 +219,6 @@ static int parse_conn_inf(char* msg, int msg_size, struct conn_inf *cinf) {
 
     memset(cinf->gid, 0, GID_RAW_SIZE);
     uint8_t *msg_p = (uint8_t *)msg;
-    msg_p += 4;
     uint8_t *gid_p = (cinf->gid);
     for (int i = 0; i < GID_RAW_SIZE; i++) {
         *gid_p = *msg_p;
@@ -231,7 +226,8 @@ static int parse_conn_inf(char* msg, int msg_size, struct conn_inf *cinf) {
         msg_p++;
     }
 
-    sscanf(msg, "qpn:%d", &(cinf->qpn));
+    char *msg_c = &msg[16];
+    sscanf(msg_c, "%d", &(cinf->qpn));
 
     return 0;
 }
