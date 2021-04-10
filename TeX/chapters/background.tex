@@ -19,7 +19,7 @@ This is especially true for applications that are heavy on read/write operations
 be slowed down significantly by high oveheads.\cite{martin97}
 
 To tackle this problems, a common solution applied in industry is the usage of InfiniBand, which
-is a network architecture which supports Remote Direct Memory Access (RDMA).
+is a network architecture which supports RDMA.
 RDMA works by letting the Network Interface Card (NIC) and the User Application (more specifically, its memory)
 directly communicate with each other, therefore bypassing the Operating System (which is known for
 causing high overhead through context switches to kernel space) and thus offloading the CPU. This practice has been
@@ -54,130 +54,93 @@ DMA operations to be initated locally and remotely\cite{infinibandvol107}.
 
 \subsection{The Linux Kernel}
 
-It is pertinent to evaluate some aspects of linux and the kernel as the nature of
-the system in which the SoftRoCE driver operates, allows its code to operate
-under the most privileged level, along the kernel itself.
 
-One of the main features of the linux kernel is its ability to extend
-its functionality during runtime. Code that can be added (or removed) to the kernel
-while is running are called modules. Each module is made of object code that can
-be dynamically linked with the insmod or modprobe executables\cite{ldd3}. 
+As the SoftRoCE driver operates as a subsystem in the linux kernel, it is pertinent to briefly
+discuss the implications encompassed by this.
 
-Security checks in linux are enforced in the kernel code, if there are security vulnerabilities inside
-the kernel, then the whole system has vulnerabilities.\cite{ldd3}
+Similar to most Unix kernels, the linux kernel is of monotithic nature. All kernel layers
+are integrated into a single program, all of which run under the kernel's privileged execution
+mode. As a consquence of this, and since security checks are only enforced by the kernel code,
+if there are secutiry vulnerabilities inside the kernel, then the whole system has vulnerabilities.
 
-% Talk about the linux kernel being expandable by modules, which operate on
-% so called `kernel space` or privileged mode, this makes them in turn mandatory
-% to be well tested, because a malfunctioning module in this case a device 
-% driver a potential target inside the system.
+One main feature of the linux kernel is its ability to extend its functionality during runtime using
+modules. Modules are pieces of code that can be dynamically linked or unlinked at runtime,
+adding functionality to the kernel\cite{ldd3}.
 
-% TODO: explain that the kernel can be built with different configurations 
-
-When compiling the linux kernel, we want to enable support for the InfiniBand network stack, virtualization and 
-also builtin functionality that will come to aid during the fuzzing process, the following are worth
-mentioning:
-
-\begin{itemize}
-    \item Kcov: Code coverage for fuzzing. From \cite{kerneldocs-kcov} Kvoc exposes kernel code coverage information in a form suitable\
-    for coverage-guided fuzzing (randomized testing). Coverage data of a running kernel is exported via\
-    a debugfs file called kcov. % TODO:
-    % NOTE ON KCOV profiling data will only become accesibleonce debugfs has been mounted mount -t debugfs none /sys/kernel/debug
-    \item KASAN: The Kernel Address Sanitizer is a dynamic memory error detector. It provides\
-    information for finding use-after-free and out-of-bound bugs, it uses compiler generated\
-    instrumentation code to check every memory access \cite{kerneldocs-kasan} % TODO:
-\end{itemize}
-
-\subsection{RDMA with Infiniband}
-
-RoCE is a standard for RDMA over Ethernet, which allows leveraging RDMA semantics over an Ethernet network without needing
-to resort to TCP transport. 
-% According to \cite{rdmamanual} RoCE provided the most efficient low lattency Ethernet solution to the day of (their?) writing (in 2015).
-% TODO: maksym => just say that RoCE is generally cheaper because it does not require specialized switches.
-\paragraph{Rxe: Soft-RoCE}
-
-Soft-RoCE is a software implementation of the RDMA transport (over Ethernet), it has been developed as a github 
-community project, with help from IBM, Mellanox and other companies.This software driver provides us an 
-uncomplicated manner to test RDMA technologies without needing to use real hardware, it provides a complete RDMA 
-stack implementation over any NIC \cite{mellanox-community}.
-
-% running \\ \$ modinfo rdma\_rxe \\ inside the shell, reveals that this module depends on the following modules: ib\_core, ip6\_udp\_tunnel, udp\_tunnel, ib\_uverbs 
-% all which are as well loaded into the kernel when issuing the command \\ \$ modprobe rdma\_rxe \\
-% modprobe loads a module into the kernel, while also loading the modules on which it depends on \cite{ldd3}.
-% TODO: Maksym => this definitely does not go into the main body of the text, if you are so eager to conclude it, use appendecies.
-
-% udev is a program that enables Linux to provide a persistent device-naming system
-% in the /dev directory \cite{kroah-hartman06}
-
-% To get Soft-RoCE capabilities, you need to install the kernel and user space libraries on both servers:
-% We are mainly interested in the rdma\_rxe kernel module, Software RDMA over Ethernet, provides a software implementation of the RoCEv2 Protocol, cite manpages.
-
-
-% TODO: is this necesary? are we using specifically InfiniBand technology? => modules are listed under /drivers/infiniband, so Ill guess yes
-
-
-% running \\ \$ modinfo rdma\_rxe \\ inside the shell, reveals that this module depends on the following modules: ib\_core, ip6\_udp\_tunnel, udp\_tunnel, ib\_uverbs 
-
-% all which are as well loaded into the kernel when issuing the command \\ \$ modprobe rdma\_rxe \\
-% modprobe loads a module into the kernel, while also loading the modules on which it depends on \cite{ldd3}.
-
-
-% udev is a program that enables Linux to provide a persistent device-naming system
-% in the /dev directory \cite{kroah-hartman06}
-
-% To get Soft-RoCE capabilities, you need to install the kernel and user space libraries on both servers:
-% We are mainly interested in the rdma\_rxe kernel module, Software RDMA over Ethernet, provides a software implementation of the RoCEv2 Protocol, cite manpages.
+During the process of kernel configuration, device drivers required for InfiniBand support can
+be compiled as built-in or as modules (Along SoftRoCE, userpace MAD support,
+userspace access (verbs), among others, are required). This should make no difference for our assessment
+about bugs and vulnerabilities for the reasons explained above.
 
 
 \subsection{Fuzzing}
 
-Software testing is a tool used in software production pipelines, its main goal is to ensure proper program functioning. One common way to test programs is 
-positive testing, in which these are tested against expected inputs under well defined scenarious (test cases), to produce the desired results.
-Fuzzing is a technique used for negative testing, as opposite to the one just mentioned, in which the program is put under malformed or non-expected input. this
-has lead to the discovery of many bugs in the recent years (TODO:\@ cite OSS website from lecture)
+In a nutshell, fuzzing is an approach to software testing where the system being tested is bombarded with test cases generated with another program. The system is then monitored for any flaws exposed by the processing of
+this input\cite{mcnally12}.
+
+Generally, this test cases consist of increasingly random modified otherwise valid inputs. Although modern
+fuzzers do not rely solely on randomness for test case generation, the simplicity of this idea yielded high
+effectiveness: fuzzing is still a widely applied technique between both security and quality assurance experts.
+It has discovered a considerable amount of bugs over the years.
+
+
+%% Software testing is a tool used in software production pipelines, its main goal is to ensure proper program functioning. One common way to test programs is
+%% positive testing, in which these are tested against expected inputs under well defined scenarious (test cases), to produce the desired results.
+%% Fuzzing is a technique used for negative testing, as opposite to the one just mentioned, in which the program is put under malformed or non-expected input. this
+%% has lead to the discovery of many bugs in the recent years (TODO:\@ cite OSS website from lecture)
 
 \subsubsection{Types of Fuzzers}
- 
-Fuzzers can be categorized into 3 main types\cite{fetzer20}:
+
+A program that generates input for another program to process, delivers the input and monitors the program
+is called a fuzzer. Fuzzers consist of different components, which will be discribe later.
+
+One important aspect for categorizing fuzzers is code coverage, measuring code coverage is usually implemented
+with help of compiler instrumentation techniques. In such case, code coverage is measured by the number of
+basic blocks reached by program execution given a \textbf{specific input}. Efficient fuzzers are capable of producing inputs that reach high coverage.
+
+Fuzzers can be categorized into 3 main types:
 
 \begin{itemize}
-    \item Blackbox: no knowledge of target program internals, therefore they have no means of measuring coverage and can only provide input to the target.
-    \item Whitebox: these fuzzers rely on the knowledge of the source code of the target application, making them more efficient ( TODO: symbolic execution tools, model checkers that improve coverage, computed coverage guides the generator)
-    \item Graybox: a combination of both blackbox and whitebox types.
+    \item Blackbox Fuzzer: No knowledge of target program internals, the testing process is limited to observing the target's input and output behaviour. Consequently, they have no means of measuring coverage and can only provide input to the target.
+    \item Whitebox Fuzzer: These fuzzers can take advantage of the source code of the target application, not allowing them better insights into how the system works, but also to benefit from coverage measurements.
+      %% these fuzzers rely on the knowledge of the source code of the target application, making them more efficient ( TODO: symbolic execution tools, model checkers that improve coverage, computed coverage guides the generator)
+    \item Graybox Fuzzer: This applies to fuzzers that do not fall into any of the previous categories. Source code of the target may not be available, but other means of inspection such as reverse engineering, static analysis, or executing inside a debugger are the usual workhorses of graybox fuzzers\cite{mcnally12}.
 \end{itemize}
 
 
-\subsubsection{Coverage and Depth}
-
-Coverage and depths are metrics which may guide fuzzers during the input generation stage.
-Coverage is measured by the number of basic blocks touched/passed by the execution under a certain input.
-Depth is defined in the context of layers of the software stack, as an example, a RESTful server may 
-ignore all other http requests than GET, this GET requests may trigger for example, a database query \cite{fetzer20}
+Along with coverage, depth is also an important metric when evaluating fuzzing efficiency. A program
+might reject a test case if, for example, the computed checksum is not equal to the checksum encountered
+in a fabricated packet. A later step further might reject the input because a header section does not conform
+to a specific standart. Reaching further stages past  checks inside a program corresponds to reaching greater
+depths, which is obviously benefitial for succesful fuzzing.
 
 \subsubsection{Fuzzer components}
 
-\paragraph{Generator}
+Modern fuzzers are composed of the following components:
 
-A Fuzz generator is in charge of creating test inputs to run on the system under test. Different 
+\paragraph{Fuzz Generator:}
+
+A fuzz generator is in charge of creating test inputs to run on the system under test. Different
 approaches serve this purpose\cite{mcnally12}:
 
 \begin{itemize}
-    \item Mutative: the idea is to start with a sample input or a set of inputs (also called corpus), and \
+    \item Mutative fuzzer: the idea is to start with a sample input or a set of inputs (also called corpus), and \
     modify a part of it. It proves useful for inputs that must conform to defined structures, coverage is not
     always good. A positive aspect of this type of generators is that they do not require protocol knowledge.
-    \item Generative: generate inputs from scratch. This can yield higher coverages, at the cost of requiring
+    \item Generative fuzzer: generate inputs from scratch. This can yield higher coverages, at the cost of requiring
     knowledge of protocols. It can be based on templates or grammars.
 \end{itemize}
 
-These two main categories can be further described by the techniques used to generate their data: 
+These two main categories can be further described by the techniques used to generate their data:
 
 \begin{itemize}
     \item Oblivious: generates or mutates data randomly, this brings of course poor coverage.
     \item Template based: provided an input template, the fuzzer will only modify/generate specific parts \
     allowed by the template.
     \item Block based: represent data as nested data blocks of varying types as opposed to string sequences.
-    \item Grammar based: make use of a previously given grammar, to generate input. 
+    \item Grammar based: make use of a previously given grammar, to generate input.
     \item Protocol fuzzer: knows about concepts such as replies and responses, and in which \
-    sequence to reply responses in order to test certain functionality.  
+    sequence to reply responses in order to test certain functionality.
 \end{itemize}
 
 Generation or Mutation based on coverage is described by the algorithm in listing~\ref{lst:genalg}.
@@ -194,7 +157,7 @@ while(True):
 
 \paragraph{Delivery Mechanisms}
 
-A delivery mechanism is a fuzzer component which is in charge of presenting input (from the generator) 
+A delivery mechanism is a fuzzer component which is in charge of presenting input (from the generator)
 to the system under test. Normally, as finding abnormal functioning during regular operation of the
 target program is aimed at, Fuzzers use delivery mechanisms simulate those used by the system under test \cite{mcnally12}
 
@@ -206,7 +169,7 @@ Delivery mechanisms are usually one of:
     \item Invocation parameters (command-line or API)
     \item Network transmissions
     \item Operating system events (including mouse and keyboard events)
-    \item Operating system resources 
+    \item Operating system resources
     \item Direct memory injection (risk to corrupt state and abort program)
 \end{itemize}
 
@@ -233,18 +196,18 @@ are well worth mentioning:
 
 \paragraph{AFL}
 
-The American Fuzzy Lop fuzzer is a brute force fuzzer that uses instrumentation guided coverage to 
+The American Fuzzy Lop fuzzer is a brute force fuzzer that uses instrumentation guided coverage to
 efficiently fuzz the system under test \cite{afl}. AFL can operate as a white-box fuzzer (source code is available)
 to achieve best results, this requires compiling the source code with a drop in replacement for gcc/clang
-called afl-gcc. 
+called afl-gcc.
 
 
 \paragraph{Libfuzzer}
 
-Libfuzzer is a coverage guided evolutionary fuzzing engine, it was designed with the intent to fuzz 
+Libfuzzer is a coverage guided evolutionary fuzzing engine, it was designed with the intent to fuzz
 libraries, feeding fuzzed inputs to an entry point (target function). In order to achieve this Libfuzzer
-is linked with the library under test. It can be combined with AFL for example, this would require both processes to be 
-periodically restarted in order to 'use' each others findings \cite{libfuzzer}. 
+is linked with the library under test. It can be combined with AFL for example, this would require both processes to be
+periodically restarted in order to 'use' each others findings \cite{libfuzzer}.
 
 
 \paragraph{kAFL}
@@ -252,18 +215,94 @@ periodically restarted in order to 'use' each others findings \cite{libfuzzer}.
 % problem: requires intel PT
 % TODO: clean up this section.
 
-As AFL is limited to userspace and lacks support for kernel space\cite{kafl}, kAFL was designed with overcoming 
+As AFL is limited to userspace and lacks support for kernel space\cite{kafl}, kAFL was designed with overcoming
 the obstacles that are inherent when fuzzing kernels: kernel crashes (panics) usually make the host operating system
 unavailable, collecting coverage from a broken system is neither possible, nor perhaps desired.
 
 The inherent non-determinism in kernel level programs: kernel threads, statefulness and similar mechanisms. (libfuzzer)
 this makes fuzzing kernel code challenging.
 
-coverage information is provided by Intel's Processor Trace (PT) technology. Logic used to perform 
+coverage information is provided by Intel's Processor Trace (PT) technology. Logic used to perform
 mutations and scheduling closely resembles the one used in AFL\cite{kafl}
 
 \paragraph{Syzkaller}
 
-Syzkaller is a fuzzing framework designed to fuzz kernels at the system call level. It operates on multiple 
+Syzkaller is a fuzzing framework designed to fuzz kernels at the system call level. It operates on multiple
 virtual machines and collects coverage information using KCOV. Syzkaller also comes with a systemcall specification
 language (syzlang), designed to aid in targetting specific subsystems inside kernels \cite{syzkaller}.
+
+
+
+
+
+%% It is pertinent to evaluate some aspects of linux and the kernel as the nature of
+%% the system in which the SoftRoCE driver operates, allows its code to operate
+%% under the most privileged level, along the kernel itself.
+
+%% One of the main features of the linux kernel is its ability to extend
+%% its functionality during runtime. Code that can be added (or removed) to the kernel
+%% while is running are called modules. Each module is made of object code that can
+%% be dynamically linked with the insmod or modprobe executables\cite{ldd3}.
+
+%% Security checks in linux are enforced in the kernel code, if there are security vulnerabilities inside
+%% the kernel, then the whole system has vulnerabilities.\cite{ldd3}
+
+% Talk about the linux kernel being expandable by modules, which operate on
+% so called `kernel space` or privileged mode, this makes them in turn mandatory
+% to be well tested, because a malfunctioning module in this case a device 
+% driver a potential target inside the system.
+
+% TODO: move this to methodology
+%% When compiling the linux kernel, we want to enable support for the InfiniBand network stack, virtualization and
+%% also builtin functionality that will come to aid during the fuzzing process, the following are worth
+%% mentioning:
+
+%% \begin{itemize}
+%%     \item Kcov: Code coverage for fuzzing. From \cite{kerneldocs-kcov} Kvoc exposes kernel code coverage information in a form suitable\
+%%     for coverage-guided fuzzing (randomized testing). Coverage data of a running kernel is exported via\
+%%     a debugfs file called kcov. % TODO:
+%%     % NOTE ON KCOV profiling data will only become accesibleonce debugfs has been mounted mount -t debugfs none /sys/kernel/debug
+%%     \item KASAN: The Kernel Address Sanitizer is a dynamic memory error detector. It provides\
+%%     information for finding use-after-free and out-of-bound bugs, it uses compiler generated\
+%%     instrumentation code to check every memory access \cite{kerneldocs-kasan} % TODO:
+%% \end{itemize}
+
+%% \subsection{RDMA with Infiniband}
+
+%% RoCE is a standard for RDMA over Ethernet, which allows leveraging RDMA semantics over an Ethernet network without needing
+%% to resort to TCP transport.
+%% % According to \cite{rdmamanual} RoCE provided the most efficient low lattency Ethernet solution to the day of (their?) writing (in 2015).
+%% % TODO: maksym => just say that RoCE is generally cheaper because it does not require specialized switches.
+%% \paragraph{Rxe: Soft-RoCE}
+
+%% Soft-RoCE is a software implementation of the RDMA transport (over Ethernet), it has been developed as a github
+%% community project, with help from IBM, Mellanox and other companies.This software driver provides us an
+%% uncomplicated manner to test RDMA technologies without needing to use real hardware, it provides a complete RDMA
+%% stack implementation over any NIC \cite{mellanox-community}.
+
+%% % running \\ \$ modinfo rdma\_rxe \\ inside the shell, reveals that this module depends on the following modules: ib\_core, ip6\_udp\_tunnel, udp\_tunnel, ib\_uverbs
+%% % all which are as well loaded into the kernel when issuing the command \\ \$ modprobe rdma\_rxe \\
+%% % modprobe loads a module into the kernel, while also loading the modules on which it depends on \cite{ldd3}.
+%% % TODO: Maksym => this definitely does not go into the main body of the text, if you are so eager to conclude it, use appendecies.
+
+%% % udev is a program that enables Linux to provide a persistent device-naming system
+%% % in the /dev directory \cite{kroah-hartman06}
+
+%% % To get Soft-RoCE capabilities, you need to install the kernel and user space libraries on both servers:
+%% % We are mainly interested in the rdma\_rxe kernel module, Software RDMA over Ethernet, provides a software implementation of the RoCEv2 Protocol, cite manpages.
+
+
+%% % TODO: is this necesary? are we using specifically InfiniBand technology? => modules are listed under /drivers/infiniband, so Ill guess yes
+
+
+%% % running \\ \$ modinfo rdma\_rxe \\ inside the shell, reveals that this module depends on the following modules: ib\_core, ip6\_udp\_tunnel, udp\_tunnel, ib\_uverbs
+
+%% % all which are as well loaded into the kernel when issuing the command \\ \$ modprobe rdma\_rxe \\
+%% % modprobe loads a module into the kernel, while also loading the modules on which it depends on \cite{ldd3}.
+
+
+%% % udev is a program that enables Linux to provide a persistent device-naming system
+%% % in the /dev directory \cite{kroah-hartman06}
+
+%% % To get Soft-RoCE capabilities, you need to install the kernel and user space libraries on both servers:
+%% % We are mainly interested in the rdma\_rxe kernel module, Software RDMA over Ethernet, provides a software implementation of the RoCEv2 Protocol, cite manpages.
