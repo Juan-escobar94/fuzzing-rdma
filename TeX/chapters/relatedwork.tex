@@ -1,9 +1,65 @@
 \section{Related work}
 
-Mellanox has been working on defining the rdma subsystem using syzlang \cite{lpc-2018},
-which allows syzkaller to operate exclusively on this subsystem, in order to efficiently
-fuzz the rdma api implementation inside the linux kernel. 
+There have been a manifold of approaches to fuzz device drivers, originating from different attack surfaces.
 
-After testing syzkaller with the subset of system calls defined in the subsystem by ourselves, 
-over a hundred crashes ocurred, of which 3 of them were unique (2 kernel panics, 1 KASAN null pointer
-dereference report). 
+\subsection{DIFUZE}
+
+Acknowledging the fact that many of the functionalities to be fulfilled by devices cannot be served through
+traditional system calls like read, write and seek, DIFUZE is an interface aware fuzzing tool that targets
+device drivers, by attacking the ioctl() interface\cite{difuze17}. It was designed with the linux kernel for
+android devices in mind.
+
+One key aspect of the ioctl system call is it's intention to support generality by design.
+Looking at its C prototype:
+
+\begin{lstlisting}[language=c]
+  int ioctl(int fd, int request, ... /* arg */);
+\end{lstlisting}
+
+The third (optional) argument serves as a untyped pointer to memory. This is implemented as a variadic argument, for at the time
+the interface was designed, void* was not valid C. Nonetheless, the interface expects a single pointer, as opposed to potentially
+many, which the variadic argument syntax would suggest.
+
+Commonly, handlers of ioctl calls are implemented as switch statements (on the second argument) that expect specific
+input on the third argument. This poses a challenge for fuzzing, as this cross dependency constitutes a problem for extracting
+the definitions of the data structures expected. There are tools that leverage taint tracking to recover input formats\cite{buzzfuzz}\cite{dowser}
+but for ioctls, these techniques are not very effective\cite{difuze17} because they cannot recover this cross dependency between command identifier
+and optional argument.
+
+A naive approach could be to hook into the ioctl call on a running application (possibly using the userspace infiniband verbs library
+in our case), and mutate the arguments given to the ioctl call. Using techniques like the LD\_PRELOAD trick facilitates this,
+but results are rarely successful, as ioctl arguments are highly constrained in nature: An undefined request code
+would most likely end in a default clause that serves for catching bad request codes. Randomly modifying the optional argument
+without knowledge of its underlying structure is also not very likely of success.
+Nevertheless, even though not very effective, this is could still be a valid a approach to target a potentially error prone interface.
+
+By using static analysis, DIFUZE is overcome this difficulties by analyzing the source code of the device drivers,
+collecting valid request codes and their corresponding data structures to be passed as a third parameter.
+
+DIFUZE undergoes 3 main stages to achieve its goal:
+
+\begin{itemize}
+  \item \textbf{Interface recovery:} Analyze source code and detect drivers enabled. Identify which device files are used to interact with them, which ioctl handlers they have registered and what arguments they expect to be passed. This phase outputs a set of tuples in the form of ( device filename, ioctl command, structure type definitions ). It is noteworthy that the output of this stage can also be exported in a human readable .json file, making it easily reusable for other applications.
+  \item \textbf{Structure generation:} Based on the definitions recovered from the previous step, this phase prepares conforming data structures to be passed to the actual execution environment.
+  \item \textbf{On-device exection:} As already mentioned, DIFUZE was specifially designed with android devices in mind. Structures that were generated are passed to the component in the target device in charge of issuing ioctl commands, while maintaining a heartbeat signal as means of monitoring for system crashes.
+\end{itemize}
+
+DIFUZE was originaly written with an own fuzzing engine called Mangofuzz, it can be however pipelined with other state of the art fuzzers like syzkaller as we will see, replacing steps 2 and 3.
+
+%% NEXT STEP: RUN DIFUZE ON MY KERNEL. SHOW SOME OUTPUT RELATED TO ROCE
+
+\subsection{Syzkaller}
+
+%% TODO: talk a little bit more about difuze, how it couples with syzkaller, and also try it out.
+%% TODO: talk about in-memory fuzzing.
+%% TODO: Talk about  syzkaller and possibly trinity.
+%% TODO: Talk about Fast Syzkaller (N-Gram technique used for accelerating syzkaller execution).
+%% TODO: Talk about symbolic execution (=> execute all paths using symbolic variables and solve constraints) => path explosion problem for large systems.
+%%
+%% Mellanox has been working on defining the rdma subsystem using syzlang \cite{lpc-2018},
+%% which allows syzkaller to operate exclusively on this subsystem, in order to efficiently
+%% fuzz the rdma api implementation inside the linux kernel.
+
+%% After testing syzkaller with the subset of system calls defined in the subsystem by ourselves,
+%% over a hundred crashes ocurred, of which 3 of them were unique (2 kernel panics, 1 KASAN null pointer
+%% dereference report).

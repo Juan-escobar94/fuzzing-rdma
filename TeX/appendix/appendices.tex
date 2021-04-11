@@ -1,3 +1,13 @@
 \appendix 
 \section{Building and Configuring the Linux Kernel}
 
+Dealing with the build system of the linux kernel for the first time was an experience for me.
+For really detailed information on how to find specific configuration options, as well as how
+to efficiently navigate the kernel sources, I recommend using Linux Kernel In a Nutshell, by
+Greg-Koah-Hartman, from O'Reilly media.
+
+The specific configuration options we want to enable in order to fuzz SoftRoCE are (use Make menuconfig):
+
+\begin{itemize}
+    \item KASAN: located under
+\end{itemize}

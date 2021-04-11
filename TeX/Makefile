@@ -1,4 +1,4 @@
-main.pdf: *.tex ./chapters/*.tex references.bib
+main.pdf: *.tex ./chapters/*.tex ./appendix/*.tex references.bib
 	latexmk -pdf main.tex 
 
 clean:
