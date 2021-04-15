@@ -143,7 +143,13 @@ These two main categories can be further described by the techniques used to gen
     sequence to reply responses in order to test certain functionality.
 \end{itemize}
 
+\paragraph{Coverage guided fuzzing}
+
 Generation or Mutation based on coverage is described by the algorithm in listing~\ref{lst:genalg}.
+
+%% maybe flow diagram replacing this listing and also highlight importance with an if cascade program.
+%% mention afl creating valid jpegs out of nothing
+
 
 \begin{lstlisting}[caption={Coverage based data generation}, label={lst:genalg}, language=python]
 # First step: acquire initial corpus
@@ -187,6 +193,12 @@ There are two broad classes of monitoring frameworks\cite{mcnally12}:
     a failure by looking for network interruptions.
 \end{itemize}
 
+\subsection{Difficulties of fuzzing the kernel}
+%% https://youtu.be/YwX4UyXnhz0?t=452
+
+
+%%
+%%
 %% TODO: remove or rewrite this section, it sucks.
 \subsubsection{Fuzzers}
 
@@ -268,7 +280,12 @@ language (syzlang), designed to aid in targetting specific subsystems inside ker
 %%     \item KASAN: The Kernel Address Sanitizer is a dynamic memory error detector. It provides\
 %%     information for finding use-after-free and out-of-bound bugs, it uses compiler generated\
 %%     instrumentation code to check every memory access \cite{kerneldocs-kasan} % TODO:
+%%      \item Fault Injection: interest to test error handling paths of IO operations, malloc, futex calls, etc: reason => a big portion of kernel code is concerned with error handling operations.
+%%
 %% \end{itemize}
+
+%% TODO: mention UBSAN and KCSAN
+
 
 %% \subsection{RDMA with Infiniband}
 
