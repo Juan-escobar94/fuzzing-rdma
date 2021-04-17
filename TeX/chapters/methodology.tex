@@ -1,21 +1,21 @@
 \section{Methodology}
 
 
-TODO: discuss different approaches to fuzz rdma api (here or in discussion?)
+%% TODO: discuss different approaches to fuzz rdma api (here or in discussion?)
 
 
 
-the kernel was built using make 
-defconfig and make kvmconfig % (TODO: research this config options to explain them)
-kvmconfig sets values like config\_hypervisor\_guest=y
+%% the kernel was built using make
+%% defconfig and make kvmconfig % (TODO: research this config options to explain them)
+%% kvmconfig sets values like config\_hypervisor\_guest=y
 
 
 
-%TODO: make menu config, search for infiniband.
-In order to retrieve the specific options to build infiniband support,  
+%% %TODO: make menu config, search for infiniband.
+%% In order to retrieve the specific options to build infiniband support,
 
 
-build the kernel using -j\$(nproc) as a parameter for make inside the main source directory
-inside the kernel source tree, after going after the proper configuration, using -j creates a 
-thread for every subdirectory in the kernel tree, which can cause the machine to become 
-unresponsive and take a much longer time to complete the build. \cite{kroah-hartman06}
+%% build the kernel using -j\$(nproc) as a parameter for make inside the main source directory
+%% inside the kernel source tree, after going after the proper configuration, using -j creates a
+%% thread for every subdirectory in the kernel tree, which can cause the machine to become
+%% unresponsive and take a much longer time to complete the build. \cite{kroah-hartman06}

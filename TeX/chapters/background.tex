@@ -152,11 +152,11 @@ Generation or Mutation based on coverage is described by the algorithm in listin
 
 
 \begin{lstlisting}[caption={Coverage based data generation}, label={lst:genalg}, language=python]
-# First step: acquire initial corpus
-while(True):
-    MutateCorpus()
-    Run(newInputs)
-    if (coverage > coverageOld)  Corpus.add(newInput)
+    # First step: acquire initial corpus
+        while(True):
+            MutateCorpus()
+            Run(newInputs)
+            if (coverage > coverageOld)  Corpus.add(newInput)
 
 \end{lstlisting}
 
@@ -193,60 +193,97 @@ There are two broad classes of monitoring frameworks\cite{mcnally12}:
     a failure by looking for network interruptions.
 \end{itemize}
 
-\subsection{Difficulties of fuzzing the kernel}
+%% IMPORTANT: Fuzzing linux kernel, explain compile options relevant for fuzzing
+\subsection{Fuzzing the linux kernel}
 %% https://youtu.be/YwX4UyXnhz0?t=452
+%%
 
+As opposed to userspace fuzzing, fuzzing the linux kernel
+presents some challenges and limitations. As an example, in single threaded
+userspace applications, coverage is a function of the input, it has a
+deterministic behaviour; Collecting coverage for the kernel however, is
+very different: there are other processes, background threads and interrupts
+that make coverage not stable\cite{bluehat2020}.
+The kernel even contains intended non-determinism\cite{nondetermkernel}.
+
+Finding races is another desirable outcome in this scenario. This is
+challenging because this kind of bugs depend on exact
+execution interleavings of threads to be triggered, they are consequently hardly reproduceable if the testing method does not account for deterministic
+thread interleavings.
+
+Despite this challenges, fuzzing has proven to be excelent approach to testing the
+kernel's code base: the system call fuzzer syzkaller alone has discovered
+almost  4000 bugs since the time it has been operational as a continous
+automated fuzzer\cite{syzkallerappspot}.
+
+The following configuration options are relevant when fuzzing the kernel:
+
+\begin{itemize}
+\item The Kernel Address Sanitizer (KASAN): Using compiler instrumentation, validity checks are inserted to memory accesses, thus revealing memory safety errors such as \
+  out-of-bound access and use-after-free. For better error reports containing stack traces, one can also enable the option CONFIG\_STACKTRACE along KASAN\cite{KASAN}.
+\item Kcov: kcov exposes coverage information for the kernel in a form suitable for coverage-guided fuzzing. Coverage data is exposed via the kcov debugfs file, located under /sys/kernel/debug/kcov. Kcov \
+  aims not to collect as much coverage as possible, but stable coverage (function of the input), by disabling coverage collection from interrupts and from non-deterministic parts of the kernel\cite{KCOV}
+\end{itemize}
+
+%%
+%% despite of this difficulties, talk about limitations of compiler based tools: they cannot discover many errors past more obvious ones.
 
 %%
 %%
 %% TODO: remove or rewrite this section, it sucks.
-\subsubsection{Fuzzers}
+%% \subsection{Fuzzers REMOVE OR REWRITE}
 
-There are well over dozens of open source fuzzing tools and libraries \cite{awesome-fuzzing}, but the purpose of this work, the following
-are well worth mentioning:
-% TODO: in each section, why not chosen.
-
-
-\paragraph{AFL}
-
-The American Fuzzy Lop fuzzer is a brute force fuzzer that uses instrumentation guided coverage to
-efficiently fuzz the system under test \cite{afl}. AFL can operate as a white-box fuzzer (source code is available)
-to achieve best results, this requires compiling the source code with a drop in replacement for gcc/clang
-called afl-gcc.
+%% There are well over dozens of open source fuzzing tools and libraries \cite{awesome-fuzzing}, but the purpose of this work, the following
+%% are well worth mentioning:
+%% % TODO: in each section, why not chosen.
 
 
-\paragraph{Libfuzzer}
+%% \paragraph{AFL}
 
-Libfuzzer is a coverage guided evolutionary fuzzing engine, it was designed with the intent to fuzz
-libraries, feeding fuzzed inputs to an entry point (target function). In order to achieve this Libfuzzer
-is linked with the library under test. It can be combined with AFL for example, this would require both processes to be
-periodically restarted in order to 'use' each others findings \cite{libfuzzer}.
+%% The American Fuzzy Lop fuzzer is a brute force fuzzer that uses instrumentation guided coverage to
+%% efficiently fuzz the system under test \cite{afl}. AFL can operate as a white-box fuzzer (source code is availabljkke)
+%% to achieve best results, this requires compiling the source code with a drop in replacement for gcc/clang
+%% called afl-gcc.
 
 
-\paragraph{kAFL}
+%% \paragraph{Libfuzzer}
 
-% problem: requires intel PT
-% TODO: clean up this section.
+%% Libfuzzer is a coverage guided evolutionary fuzzing engine, it was designed with the intent to fuzz
+%% libraries, feeding fuzzed inputs to an entry point (target function). In order to achieve this Libfuzzer
+%% is linked with the library under test. It can be combined with AFL for example, this would require both processes to be
+%% periodically restarted in order to 'use' each others findings \cite{libfuzzer}.
 
-As AFL is limited to userspace and lacks support for kernel space\cite{kafl}, kAFL was designed with overcoming
-the obstacles that are inherent when fuzzing kernels: kernel crashes (panics) usually make the host operating system
-unavailable, collecting coverage from a broken system is neither possible, nor perhaps desired.
 
-The inherent non-determinism in kernel level programs: kernel threads, statefulness and similar mechanisms. (libfuzzer)
-this makes fuzzing kernel code challenging.
+%% \paragraph{kAFL}
 
-coverage information is provided by Intel's Processor Trace (PT) technology. Logic used to perform
-mutations and scheduling closely resembles the one used in AFL\cite{kafl}
+%% % problem: requires intel PT
+%% % TODO: clean up this section.
 
-\paragraph{Syzkaller}
+%% As AFL is limited to userspace and lacks support for kernel space\cite{kafl}, kAFL was designed with overcoming
+%% the obstacles that are inherent when fuzzing kernels: kernel crashes (panics) usually make the host operating system
+%% unavailable, collecting coverage from a broken system is neither possible, nor perhaps desired.
 
-Syzkaller is a fuzzing framework designed to fuzz kernels at the system call level. It operates on multiple
-virtual machines and collects coverage information using KCOV. Syzkaller also comes with a systemcall specification
-language (syzlang), designed to aid in targetting specific subsystems inside kernels \cite{syzkaller}.
+%% The inherent non-determinism in kernel level programs: kernel threads, statefulness and similar mechanisms. (libfuzzer)
+%% this makes fuzzing kernel code challenging.
+
+%% coverage information is provided by Intel's Processor Trace (PT) technology. Logic used to perform
+%% mutations and scheduling closely resembles the one used in AFL\cite{kafl}
+
+%% \paragraph{Syzkaller}
+
+%% Syzkaller is a fuzzing framework designed to fuzz kernels at the system call level. It operates on multiple
+%% virtual machines and collects coverage information using KCOV. Syzkaller also comes with a systemcall specification
+%% language (syzlang), designed to aid in targetting specific subsystems inside kernels \cite{syzkaller}.
 
 \subsection{Challenges posed by ibverbs applications}
 
+Reaching full coverage for IB verbs applications is not trivial, as the Queue Pairs (similar to sockets in
+traditional network programming) are modeled as a state machine.
+
 \subsubsection{Programming with ibverbs}
+
+%% TODO how does it work, basics, state machine
+%% specific bug => requires a specific state
 
 
 
@@ -274,13 +311,13 @@ language (syzlang), designed to aid in targetting specific subsystems inside ker
 
 %% \begin{itemize}
 %%     \item Kcov: Code coverage for fuzzing. From \cite{kerneldocs-kcov} Kvoc exposes kernel code coverage information in a form suitable\
-%%     for coverage-guided fuzzing (randomized testing). Coverage data of a running kernel is exported via\
+%%     for coverage-guided fuzzing (randomized testing). Coverage data of a running kernel is exported via\ Background
 %%     a debugfs file called kcov. % TODO:
 %%     % NOTE ON KCOV profiling data will only become accesibleonce debugfs has been mounted mount -t debugfs none /sys/kernel/debug
 %%     \item KASAN: The Kernel Address Sanitizer is a dynamic memory error detector. It provides\
 %%     information for finding use-after-free and out-of-bound bugs, it uses compiler generated\
 %%     instrumentation code to check every memory access \cite{kerneldocs-kasan} % TODO:
-%%      \item Fault Injection: interest to test error handling paths of IO operations, malloc, futex calls, etc: reason => a big portion of kernel code is concerned with error handling operations.
+%%     \item Fault Injection: interest to test error handling paths of IO operations, malloc, futex calls, etc: reason => a big portion of kernel code is concerned with error handling operations. => related work
 %%
 %% \end{itemize}
 
