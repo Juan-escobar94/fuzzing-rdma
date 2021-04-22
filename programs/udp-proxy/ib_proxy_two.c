@@ -115,6 +115,8 @@ char* deserialize_ib_pkt(char* buffer, int buffer_len) {
 struct ports_record {
   char client_port[NI_MAXSERV];
   char server_port[NI_MAXSERV];
+  char* client_port_std;
+  char* server_port_std;
 };
 
 
@@ -133,7 +135,10 @@ int main (int argc, char** argv) {
        print_usage(argv[1]);
        exit(1); 
     }
-    struct ports_record pr;
+    struct ports_record pr = {
+      .client_port_std = "9001",
+      .server_port_std = "8001"
+    };
     int status;
     int sd_listen, sd_fw_toclient, sd_fw_toserv;
     struct addrinfo hints, *res;
@@ -177,7 +182,7 @@ int main (int argc, char** argv) {
     freeaddrinfo(res);
 
 
-    status = getaddrinfo(NULL, "9001", &hints, &res_client);
+    status = getaddrinfo(NULL, pr.client_port_std, &hints, &res_client);
     if (status != 0) {
       perror("getaddrinfo");
       exit(1);
@@ -201,7 +206,7 @@ int main (int argc, char** argv) {
       exit(1);
     }
 
-    status = getaddrinfo(NULL, "8001", &hints, &res_server);
+    status = getaddrinfo(NULL, pr.server_port_std, &hints, &res_server);
     if (status != 0) {
       perror("getaddrinfo");
       exit(1);
@@ -236,6 +241,8 @@ int main (int argc, char** argv) {
     char sender_port[NI_MAXSERV];
     struct sockaddr_storage sender;
     socklen_t sender_len = sizeof(struct sockaddr_storage);
+
+    // recieve all packets from 4971 on host (sd_listen)
     while ((received = recvfrom(sd_listen, &buf, sizeof buf, 0, \
                                 (struct sockaddr*) &sender,  &sender_len)) != -1) {
 
@@ -269,15 +276,16 @@ int main (int argc, char** argv) {
         sendto(sd_fw_toclient_xch, &buf, sizeof buf, 0, (struct sockaddr*) res_client_xch->ai_addr, sizeof *(res_client_xch->ai_addr));
         freeaddrinfo(res_client_xch);
       }
+
         // incoming packet from client, forward to server
-      else if(strcmp(pr.client_port, sender_port) == 0) {
+      else if(strcmp(pr.client_port_std, sender_port) == 0) {
           printf("forwarding to server\n");
           sendto(sd_fw_toserv, &buf, sizeof buf, 0, (struct sockaddr*) res_server->ai_addr, sizeof *(res_server->ai_addr));
-        } else if (strcmp(pr.server_port, sender_port) == 0) {
+        } else if (strcmp(pr.server_port_std, sender_port) == 0) {
           printf("forwarding to client\n");
           sendto(sd_fw_toclient, &buf, sizeof buf, 0, (struct sockaddr*) res_client->ai_addr, sizeof *(res_client->ai_addr));
         } else {
-          printf("unknown sender\n");
+          printf("unknown sender, dropping packet.\n");
         }
 
 
