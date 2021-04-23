@@ -6,6 +6,8 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include "net_types.h"
 
 #define MAX_ETH_LEN 1542
@@ -100,8 +102,71 @@ enum buffer_type check_buffer_type(char *buffer, int buffer_size) {
   }
 }
 
-void fuzz_ib_bth(char* ib_bth, int bth_size) {
+/* all bth headers were defined with 1 byte diff, meaning this enum covers all scenarios */
+enum bth_header_offsets {
+IB_OPCODE, // = IB_OPCODE_OFFSET - IB_BTH_OFFSET,
+IB_SMPT, // = IB_SMPT_OFFSET - IB_BTH_OFFSET,
+IB_PKEY_B1, // = IB_PKEY_OFFSET - IB_BTH_OFFSET,
+IB_PKEY_B2, // = IB_PKEY_OFFSET - IB_BTH_OFFSET,
+IB_FR_BR_RESERVED , //= IB_FR_BR_RESERVED_OFFSET - IB_BTH_OFFSET,
+IB_QP_B1, // = IB_DEST_QP_B1_OFFSET - IB_BTH_OFFSET,
+IB_QP_B2, // = IB_DEST_QP_B2_OFFSET - IB_BTH_OFFSET,
+IB_QP_B3, // = IB_DEST_QP_B3_OFFSET - IB_BTH_OFFSET,
+IB_AR, // = IB_AR_OFFSET - IB_BTH_OFFSET,
+IB_PSN_B1, // = IB_PSN_B1_OFFSET - IB_BTH_OFFSET,
+IB_PSN_B2, // = IB_PSN_B2_OFFSET - IB_BTH_OFFSET,
+IB_PSN_B3, // = IB_PSN_B3_OFFSET - IB_BTH_OFFSET
+};
 
+
+
+void fuzz_ib_bth(char* ib_bth, int bth_size, int rounds) {
+  for (int i = 0; i < rounds; i++) {
+    enum bth_header_offsets rand_ib_hdr_offset = (enum bth_header_offsets) rand() % bth_size;
+    /* Normally, fuzzers do mutations incrementally */
+    /* but since this application relies on output */
+    /* being produces by another machine, it arguably */
+    /* better to just XOR a 'truly' random byte */
+    unsigned char random_byte = (unsigned char) rand() % (0xFF + 1);
+    switch(rand_ib_hdr_offset) {
+      case IB_OPCODE:
+        ib_bth[IB_OPCODE] = ib_bth[IB_OPCODE] ^ random_byte;
+        break;
+      case IB_SMPT:
+        /* 0xF8 = 0b11111000 */
+        /* tver is bits 5-8, should not be modified */
+        ib_bth[IB_SMPT] = ib_bth[IB_SMPT] ^ (random_byte & 0xF8);
+        break;
+      case IB_PKEY_B1:
+        break;
+      case IB_PKEY_B2:
+        break;
+      case IB_FR_BR_RESERVED:
+        ib_bth[IB_FR_BR_RESERVED] = ib_bth[IB_FR_BR_RESERVED] ^ random_byte;
+        break;
+      case IB_QP_B1:
+        /* changing QPN to a non valid number does not trigger new behaviour */
+        break;
+      case IB_QP_B2:
+        /* changing QPN to a non valid number does not trigger new behaviour */
+        break;
+      case IB_QP_B3:
+        /* changing QPN to a non valid number does not trigger new behaviour */
+        break;
+      case IB_AR:
+        ib_bth[IB_AR] = ib_bth[IB_AR] ^ (random_byte);
+        break;
+      case IB_PSN_B1:
+        ib_bth[IB_PSN_B1] = ib_bth[IB_PSN_B1] ^ (random_byte);
+        break;
+      case IB_PSN_B2:
+        ib_bth[IB_PSN_B2] = ib_bth[IB_PSN_B2] ^ (random_byte);
+        break;
+      case IB_PSN_B3:
+        ib_bth[IB_PSN_B3] = ib_bth[IB_PSN_B3] ^ (random_byte);
+        break;
+    }
+  }
 }
 
 
@@ -117,6 +182,8 @@ struct config_params config = {
 
 int main() {
 
+  srand(time(NULL));
+
   printf("eth type offset: %d\n", ETH_TYPE_OFFSET);
   printf("ip ver offset: %d\n", VER_IHL_OFFSET);
   printf("ip dscp offset: %d\n", DSCP_ECN_OFFSET);
@@ -126,6 +193,8 @@ int main() {
   printf("ip ttl offset: %d\n", TTL_OFFSET);
   printf("ip protocol offset: %d\n", PROTOCOL_OFFSET);
   printf("dest port offset: %d\n", DEST_PORT_OFFSET);
+  printf("ib PSN3 enum val: %d\n", IB_PSN_B3);
+  printf("ib PSN rel offset (BTH SIZE): %d\n", IB_PSEUD_PAYLOAD_OFFSET - IB_BTH_OFFSET);
   int a;
   scanf("%d", &a);
 
@@ -191,7 +260,8 @@ int main() {
         case IB_TRAFFIC:
           printf("buffer contains IB traffic\n");
           char* ib_bth = &buffer_client[IB_BTH_OFFSET];
-          fuzz_ib_bth(ib_bth, IB_PSEUD_PAYLOAD_OFFSET - IB_BTH_OFFSET);
+          /* TODO: add a random number of rounds as third param instead of 1 */
+          fuzz_ib_bth(ib_bth, IB_PSEUD_PAYLOAD_OFFSET - IB_BTH_OFFSET, 1);
           break;
         default:
           printf("traffic is irrelevant\n");
