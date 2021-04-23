@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set -euo pipefail
 set -x
 
 # make sure the devices dont exist already
@@ -19,6 +18,7 @@ done
 sleep 0.2s
 
 
+set -euo pipefail
 # set up 4 tap devices
 #
 user=`whoami`
