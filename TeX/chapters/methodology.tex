@@ -1,52 +1,93 @@
 \section{Methodology}
 
-
-
 \subsection{Design of a Proxy Fuzzer}
 
-Since state-of-the-art fuzzers do not directly address the challenges
-posed by RDMA applications (BL), we design a fuzzer that acts like a proxy
-between two machines, which communicate using RDMA.
-%
-% TODO: (backlink to background, remember to explain about state of Queue Pairs).
+Since many state-of-the-art fuzzers do not directly address some of the challenges
+posed by RDMA applications (refer back to \ref{s:ibverbs-challenges}), I propose a fuzzer that plays the role
+of a proxy between two machines comunicating using RDMA. The network architecture
+allows the fuzzer not only to monitor traffic between the machines, but also to modify it.
+Unlike system call based fuzzers, this approach can easily test code paths which require
+fully initialized and connected applications, in the context of % ibverbs.
 
-The job of the proxy is, besides from forwarding all traffic between both machines,
-to identify and traffic containing specific headers that get processed by SoftRoCE.
-Note that our goal is to put SoftRoCE under test, meaning that only headers that get
-processed by SoftRoCE should be modified.
-%
-% TODO: add a section with anatomy of a base transport header
+%% This presents an advantage over system call based fuzzers, in such a way that
+%% it can easily trigger code paths that require fully initialized and connected applications,
+%% in the context of the Infiniband Verbs semantics.
+
+As the goal of the fuzzer is to trigger bugs related to the RDMA network stack,
+only the modification of headers that are pertinent to it is desirable;
+the Infiniband Base Transport Headers, sitting at layer 4,
+define fields related to RDMA applications. Fuzzing any other headers such as
+ethernet or IP headers would be detrimental to efficiency, as the modified packets may
+not even reach the target application. Fuzzing payload contents is also undoubtedly inefficient,
+because it does not concern RDMA device drivers.
+
+
+It is relevant to mention that even though this design was conceived with
+SoftRoCE at hand, it can be applied to anything that processes Infiniband Base
+Transport Headers, even real NICs. This is true because processing of Infiniband
+Base Transport Headers is implemented at the hardware level.
+
+
+%% TODO: (backlink to background, remember to explain about state of Queue Pairs).
+
+%% TODO: add a section with anatomy of a base transport header
+
+At the first stage of the conceptual design this work first evaluates the impact of fuzzing
+traffic in only one direction, but it will expand onto the possibility of attacking the
+communication in both directions. Figure \ref{fig:fuzzerconcept} illustrates the underlying
+concept for the described design.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{proxyfuzzerconcept}
+  \caption{basic concept of a proxy fuzzer, red arrows denote fuzzed traffic.}
+  \label{fig:fuzzerconcept}
+\end{figure}
 
 \subsection{Implementation} % maybe this is still part of design
 
-With the help of QEMU, we create a pair of virtual machines running
-our custom kernel on a x86\_64 architecture. Using debootstrap, we can easily
-install a Debian system on the virtual machines, and specify all of
-the required packages for our test environment.
+With the help of the machine emulator / virtualizer QEMU, ///I can create a pair of
+virtual machines running the custom kernel on a x86\_64 architecture.
+Using debootstrap, ///one can easily install a Debian system on
+the virtual machines, and specify all of the required packages
+for ///my test environment, including those necessary to compile and run applications
+using the verbs libraries.
 
-By using TUN/TAP interfaces, we can read all network traffic that goes
+We///// want to be able to see traffic, % tap interfaces offer a solution
+
+By using TUN/TAP interfaces, the fuzzer can read all network traffic that goes
 through the TUN/TAP interface inside a user space program. As stated in
 the Kernel documentation, these interfaces can be seen as a simple point-to-point
 or ethernet device, which send and receive packets to and from a user space program.
 
-we can connect the network interface cards
+I///// can connect the network interface cards
 inside the virtual machines to a virtual interface visible to the host environment.
-%
+
 % briefly explain tap interfaces
-%
+
 Creating a TAP interface is possible by opening the `/dev/net/tun` device file.
 With the file descriptor resulting from the previous open system call, we can ask the operating system
 to create a TAP interface by issuing an ioctl system call, with the name of the interface we want to
 register. Once the program ends, the operating system removes this interface, unless another ioctl call
-is issued to make this interface persistent. This is what the ip tuntap command does\footnote{iproute2: https://git.kernel.org/pub/scm/network/iproute2/iproute2.git/ }.
+is issued to make this interface persistent. The creation of the interface and the further ioctl call for persistence
+is roughly what the ip tuntap command does\footnote{iproute2: https://git.kernel.org/pub/scm/network/iproute2/iproute2.git/ }.
 
-Unfortunately, we cannot reopen these interfaces inside our proxy fuzzer process, since the QEMU
+% TODO: code snippet for creating such devices
+
+
+Unfortunately, we cannot reopen these interfaces in the context of proxy fuzzer process, since the QEMU
 process has already opened them; the respective ioctl system call fails and sets the
 global ERRNO variable to EBUSY (device or resource busy). To overcome this, we create a pair of
 virtual bridges, connect them to the tap interfaces mapped to the ethernet interfaces inside the virtual
 machines, and we create additional tap interfaces and also connect them to the bridge.
 
 %% TODO: Picture
+%%
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{proxyfuzzernetworkdetailed}
+  \caption[networkdetailed]{Detailed network architecture for the proxy fuzzer}
+\end{figure}
 
 %% TODO: explain fuzzing loop, which fields not to fuzz, removed crc checks
 

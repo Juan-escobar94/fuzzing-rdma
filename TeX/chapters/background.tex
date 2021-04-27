@@ -4,10 +4,10 @@ In the setting of modern data centers and HPC clusters, there have been numerous
 to enhance performance. Data Analytics applications that rely on machine and deep learning techniques demand
 tremendous workloads with their need for massive computing performance, and have led to the wide adoption of graphics
 processing units (GPU) accelerator and multicore (CPU) technologies, which are pushing current datacenter interconnect
-and memory architectures to their limit\cite{shalf19}.
+and memory architectures to their limit\cite{shalfHPCInterconnectsEnd2019}.
 
 Furthermore, communication using conventional ethernet fabric is a severe inhibitor to efficient resource sharing.
-For emerging compute intensive and resource hungry applications, substantial increases in bandwidth are a necessity\cite{shalf19}.
+For emerging compute intensive and resource hungry applications, substantial increases in bandwidth are a necessity\cite{shalfHPCInterconnectsEnd2019}.
 
 A shift towards high speed network fabrics has been proven useful,
 because it helps alleviaite the latencies that may arise from node to node communication.
@@ -16,7 +16,7 @@ The usage of InfiniBand fabrics over Ethernet fabrics is common in such setting.
 The amount of time that a processor is engaged in the transmition or reception of a message, also known as overhead,
 can also play a major role in performance, since the processor cannot perform other operations.
 This is especially true for applications that are heavy on read/write operations, as they can
-be slowed down significantly by high oveheads.\cite{martin97}
+be slowed down significantly by high overheads\footnote{Overhead}\cite{martin97}.
 
 To tackle this problems, a common solution applied in industry is the usage of InfiniBand, which
 is a network architecture which supports RDMA.
@@ -65,7 +65,7 @@ if there are secutiry vulnerabilities inside the kernel, then the whole system h
 
 One main feature of the linux kernel is its ability to extend its functionality during runtime using
 modules. Modules are pieces of code that can be dynamically linked or unlinked at runtime,
-adding functionality to the kernel\cite{ldd3}.
+adding functionality to the kernel\cite{korbethLinuxDeviceDrivers2005}.
 
 During the process of kernel configuration, device drivers required for InfiniBand support can
 be compiled as built-in or as modules (Along SoftRoCE, userpace MAD support,
@@ -76,7 +76,7 @@ about bugs and vulnerabilities for the reasons explained above.
 \subsection{Fuzzing}
 
 In a nutshell, fuzzing is an approach to software testing where the system being tested is bombarded with test cases generated with another program. The system is then monitored for any flaws exposed by the processing of
-this input\cite{mcnally12}.
+this input\cite{mcnallyFuzzingStateArt2012}.
 
 Generally, this test cases consist of increasingly random modified otherwise valid inputs. Although modern
 fuzzers do not rely solely on randomness for test case generation, the simplicity of this idea yielded high
@@ -104,7 +104,7 @@ Fuzzers can be categorized into 3 main types:
     \item Blackbox Fuzzer: No knowledge of target program internals, the testing process is limited to observing the target's input and output behaviour. Consequently, they have no means of measuring coverage and can only provide input to the target.
     \item Whitebox Fuzzer: These fuzzers can take advantage of the source code of the target application, not allowing them better insights into how the system works, but also to benefit from coverage measurements.
       %% these fuzzers rely on the knowledge of the source code of the target application, making them more efficient ( TODO: symbolic execution tools, model checkers that improve coverage, computed coverage guides the generator)
-    \item Graybox Fuzzer: This applies to fuzzers that do not fall into any of the previous categories. Source code of the target may not be available, but other means of inspection such as reverse engineering, static analysis, or executing inside a debugger are the usual workhorses of graybox fuzzers\cite{mcnally12}.
+    \item Graybox Fuzzer: This applies to fuzzers that do not fall into any of the previous categories. Source code of the target may not be available, but other means of inspection such as reverse engineering, static analysis, or executing inside a debugger are the usual workhorses of graybox fuzzers\cite{mcnallyFuzzingStateArt2012}.
 \end{itemize}
 
 
@@ -121,7 +121,7 @@ Modern fuzzers are composed of the following components:
 \paragraph{Fuzz Generator:}
 
 A fuzz generator is in charge of creating test inputs to run on the system under test. Different
-approaches serve this purpose\cite{mcnally12}:
+approaches serve this purpose\cite{mcnallyFuzzingStateArt2012}:
 
 \begin{itemize}
     \item Mutative fuzzer: the idea is to start with a sample input or a set of inputs (also called corpus), and \
@@ -165,7 +165,7 @@ Generation or Mutation based on coverage is described by the algorithm in listin
 
 A delivery mechanism is a fuzzer component which is in charge of presenting input (from the generator)
 to the system under test. Normally, as finding abnormal functioning during regular operation of the
-target program is aimed at, Fuzzers use delivery mechanisms simulate those used by the system under test \cite{mcnally12}
+target program is aimed at, Fuzzers use delivery mechanisms simulate those used by the system under test\cite{mcnallyFuzzingStateArt2012}.
 
 Delivery mechanisms are usually one of:
 
@@ -184,7 +184,7 @@ Delivery mechanisms are usually one of:
 \paragraph{Monitoring Frameworks}
 
 Detecting that the system under test has crashed as a result of some input is essential to the fuzzing process.
-There are two broad classes of monitoring frameworks\cite{mcnally12}:
+There are two broad classes of monitoring frameworks\cite{mcnallyFuzzingStateArt2012}:
 
 \begin{itemize}
     \item Local monitoring: the fuzzer is installed in the same system as the target. It may look for additional output \
@@ -202,9 +202,11 @@ As opposed to userspace fuzzing, fuzzing the linux kernel
 presents some challenges and limitations. As an example, in single threaded
 userspace applications, coverage is a function of the input, it has a
 deterministic behaviour; Collecting coverage for the kernel however, is
-very different: there are other processes, background threads and interrupts
-that make coverage not stable\cite{bluehat2020}.
-The kernel even contains intended non-determinism\cite{nondetermkernel}.
+very different;  The kernel contains a high degree
+non-deterministic behavior. In \cite{okechInvestigatingExecutionPath2013}, a
+simple test program consisting of an open and read system call revealed
+559 distinct execution paths, which were mainly attributed to interrupts and context switches.
+% without interrupt and switches 33 unique paths
 
 Finding races is another desirable outcome in this scenario. This is
 challenging because this kind of bugs depend on exact
@@ -214,15 +216,15 @@ thread interleavings.
 Despite this challenges, fuzzing has proven to be excelent approach to testing the
 kernel's code base: the system call fuzzer syzkaller alone has discovered
 almost  4000 bugs since the time it has been operational as a continous
-automated fuzzer\cite{syzkallerappspot}.
+automated fuzzer\cite{syzbotappspot}.
 
 The following configuration options are relevant when fuzzing the kernel:
 
 \begin{itemize}
 \item The Kernel Address Sanitizer (KASAN): Using compiler instrumentation, validity checks are inserted to memory accesses, thus revealing memory safety errors such as \
-  out-of-bound access and use-after-free. For better error reports containing stack traces, one can also enable the option CONFIG\_STACKTRACE along KASAN\cite{KASAN}.
+  out-of-bound access and use-after-free. For better error reports containing stack traces, one can also enable the option CONFIG\_STACKTRACE along KASAN\cite{Kasan}.
 \item Kcov: kcov exposes coverage information for the kernel in a form suitable for coverage-guided fuzzing. Coverage data is exposed via the kcov debugfs file, located under /sys/kernel/debug/kcov. Kcov \
-  aims not to collect as much coverage as possible, but stable coverage (function of the input), by disabling coverage collection from interrupts and from non-deterministic parts of the kernel\cite{KCOV}
+  aims not to collect as much coverage as possible, but stable coverage (function of the input), by disabling coverage collection from interrupts and from non-deterministic parts of the kernel\cite{KcovCodeCoverage}
 \end{itemize}
 
 %%
@@ -275,7 +277,7 @@ The following configuration options are relevant when fuzzing the kernel:
 %% virtual machines and collects coverage information using KCOV. Syzkaller also comes with a systemcall specification
 %% language (syzlang), designed to aid in targetting specific subsystems inside kernels \cite{syzkaller}.
 
-\subsection{Challenges posed by ibverbs applications}
+\subsection{Challenges posed by ibverbs applications}\label{s:ibverbs-challenges}
 
 Reaching full coverage for IB verbs applications is not trivial, as the Queue Pairs (similar to sockets in
 traditional network programming) are modeled as a state machine.

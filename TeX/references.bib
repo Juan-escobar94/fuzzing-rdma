@@ -5,12 +5,14 @@ year = {2020},
 publisher = {TU Dresden}
 }
 
-@book{ldd3,
-author = {Korbeth Jonath, Alessandro Rubini and Kroah-Hartman, Greg},
-title = {Linux Device Drivers},
-year = {2005},
-isbn = {0596005903},
-publisher = {O'Reilly Media, Inc.},
+
+@book{korbethLinuxDeviceDrivers2005,
+  title = {Linux {{Device Drivers}}},
+  author = {Korbeth, Jonath and Rubini, Alessandro and {Kroah-Hartman}, Greg},
+  year = {2005},
+  edition = {Third},
+  publisher = {{O'Reilly Media, Inc.}},
+  isbn = {0-596-00590-3}
 }
 
 
@@ -78,7 +80,7 @@ author = {Sergej Schumilo, et-al.},
 title = {kAFL: Hardware-Assisted Feedback Fuzzing for OS Kernels},
 journal = {usenix},
 year = 2017,
-month = 7 
+month = jul
 }
 
 @book{intro-ib,
@@ -101,15 +103,16 @@ author = {Tarick Bedeir},
 title = {Building an RDMA-Capable Application with IB Verbs},
 journal = {schlumberger},
 year = 2010,
-month = 8 
+month = aug
 }
 
-@article{mcnally12,
-author = {Richard Mcnally, Ken Yiu, Duncan Grove and Damien Gerhardy},
-title = {Fuzzing: The State of the Art},
-journal = {DSTO Defence Science and Technology Organisation},
-year = 2012,
-month = 2
+
+@article{mcnallyFuzzingStateArt2012,
+  title = {Fuzzing: {{The State}} of the {{Art}}},
+  author = {McNally, Richard and Yiu, Ken and Grove, Duncan and Gerhardy, Damien},
+  year = {2012},
+  month = feb,
+  journal = {DSTO Defence Science and Technology Organisation}
 }
 
 
@@ -120,12 +123,12 @@ journal = {ACM SIGARCH Computer Architecture News},
 year = 1997
 }
 
-@InProceedings{shalf19,
-author ={John Shalf},
-title = {HPC Interconnects at the End of Moore's Law},
-booktitle = {2019 Optical Fiber Communications Conference and Exhibition (OFC)},
-publisher = {IEEE},
-year = 2019
+@article{shalfHPCInterconnectsEnd2019,
+  title = {{{HPC Interconnects}} at the {{End}} of {{Moore}}'s {{Law}}},
+  author = {Shalf, John},
+  year = {2019},
+  month = mar,
+  journal = {2019 Optical Fiber Communications Conference and Exhibition (OFC)}
 }
 
 @manual{infinibandvol107,
@@ -146,4 +149,90 @@ year = 2014
 title={Soft-RoCE: RDMA Transport in a software implementation},
 organization = {Infiniband Trade Association},
 year = 2015
+}
+
+}
+
+@article{chenLinuxKernelVulnerabilities2011,
+  title = {Linux Kernel Vulnerabilities: {{State}}-of-the-Art Defenses and Open Problems},
+  author = {Chen, Haogang and Mao, Yandong and Wang, Xi and Zhou, Dong and Zeldovich, Nickolai and Kaashoek, M. Frans},
+  year = {2011},
+  month = nov,
+  file = {/home/juan/Zotero/storage/8AY4USDX/_.pdf},
+  journal = {APSys '11: Proceedings of the Second Asia-Pacific Workshop on Systems}
+}
+
+@article{corinaDIFUZEInterfaceAware2017,
+  title = {{{DIFUZE}}: {{Interface Aware Fuzzing}} for {{Kernel Drivers}}},
+  author = {Corina, Jake and Aravind, Machiry and Salls, Christopher and Shoshitaishvili, Yan and Hao, Shuang and Kruegel, Christopher and Vigna, Giovanni},
+  year = {2017},
+  month = oct,
+  file = {/home/juan/Zotero/storage/26VDGF7G/_.pdf},
+  journal = {CCS '17: 2017 ACM SIGSAC Conference on Computer and Communications Security}
+}
+
+@article{chouEmpiricalStudyOperating2001,
+  title = {An {{Empirical Study}} of {{Operating Systems Errors}}},
+  author = {Chou, Andy and Yang, Junfeng and Chelf, Benjamin and Hallem, Seth and Engler, Dawson},
+  year = {2001},
+  file = {/home/juan/SciencePapers/empstudyoserrors2001.pdf},
+  journal = {SOSP '01: Proceedings of the eighteenth ACM symposium on Operating systems principles}
+}
+
+
+@misc{vanderstoepAndroidProtectingKernel2016,
+  title = {Android: Protecting the Kernel},
+  author = {Vander Stoep, Jeff},
+  year = {2016},
+  month = jul,
+  publisher = {{The Linux Foundation}}
+}
+
+
+@misc{vyukovSyzkallerAdventuresContinuous2020,
+  title = {Syzkaller: {{Adventures}} in {{Continuous Coverage}}-Guided {{Kernel Fuzzing}}},
+  author = {Vyukov, Dmitry},
+  year = {2020},
+  month = feb,
+  address = {{Tel Aviv}}
+}
+
+@misc{osherovichImprovingTestingRDMA2018,
+  title = {Improving Testing of {{RDMA}} with Syzkaller, {{RXE}} and {{Python}}},
+  author = {Osherovich, Noa and Gunthorpe, Jason},
+  year = {2018},
+  month = nov,
+  address = {{Vancouver}}
+}
+
+
+@article{liFastSyzkallerImprovingFuzz2019,
+  title = {{{FastSyzkaller}}: {{Improving Fuzz Efficiency}} for {{Linux Kernel Fuzzing}}},
+  author = {Li, Dan and Chen, Hua},
+  year = {2019},
+  file = {/home/juan/Zotero/storage/34G3N3HM/_.pdf},
+  journal = {IOP Conf. Series: Journal of Physics: Conf. Series 1176}
+}
+
+
+@article{okechInvestigatingExecutionPath2013,
+  title = {Investigating {{Execution Path Non}}-Determinism in the {{Linux Kernel}}},
+  author = {Okech, Peter and Mc Guire, Nicholas and Fetzer, Christof and {Okelo-Odongo}, William},
+  year = {2013},
+  journal = {Proc. 14th RealTime Linux Workshop, Lugano}
+}
+
+@misc{KcovCodeCoverage,
+  title = {Kcov: {{Code Coverage for Fuzzing}}},
+  howpublished = {\url{https://www.kernel.org/doc/html/latest/dev-tools/kcov.html}}
+}
+
+@misc{Kasan,
+  title = {{{The Kernel Address Sanitizer (KASAN)}}},
+  howpublished = {\url{https://www.kernel.org/doc/html/latest/dev-tools/kasan.html}}
+}
+
+@misc{syzbotappspot,
+  title = {Syzbot},
+  howpublished = {\url{https://syzkaller.appspot.com/upstream}}
 }
