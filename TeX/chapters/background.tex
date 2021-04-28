@@ -123,9 +123,9 @@ Modern fuzzers are composed of the following components:
 A fuzz generator is in charge of creating test inputs to run on the system under test. Different
 approaches serve this purpose\cite{mcnallyFuzzingStateArt2012}:
 
-\begin{itemize}
-    \item Mutative fuzzer: the idea is to start with a sample input or a set of inputs (also called corpus), and \
-    modify a part of it. It proves useful for inputs that must conform to defined structures, coverage is not
+\begin{itemize}\label{ss:fuzzer-components}
+    \item Mutative fuzzer: the idea is to start with a sample input or a set of inputs, and \
+    modify a part of it. This set of inputs is commonly refered to as the \textbf{input corpus}; the mutative approach is useful for inputs that must conform to defined structures, coverage is not
     always good. A positive aspect of this type of generators is that they do not require protocol knowledge.
     \item Generative fuzzer: generate inputs from scratch. This can yield higher coverages, at the cost of requiring
     knowledge of protocols. It can be based on templates or grammars.
@@ -201,10 +201,10 @@ There are two broad classes of monitoring frameworks\cite{mcnallyFuzzingStateArt
 As opposed to userspace fuzzing, fuzzing the linux kernel
 presents some challenges and limitations. As an example, in single threaded
 userspace applications, coverage is a function of the input, it has a
-deterministic behaviour; Collecting coverage for the kernel however, is
-very different;  The kernel contains a high degree
+deterministic behaviour; collecting coverage for the kernel however, is
+very different;  the kernel contains a high degree
 non-deterministic behavior. In \cite{okechInvestigatingExecutionPath2013}, a
-simple test program consisting of an open and read system call revealed
+simple test program consisting of an open and a read system call revealed
 559 distinct execution paths, which were mainly attributed to interrupts and context switches.
 % without interrupt and switches 33 unique paths
 
@@ -216,15 +216,15 @@ thread interleavings.
 Despite this challenges, fuzzing has proven to be excelent approach to testing the
 kernel's code base: the system call fuzzer syzkaller alone has discovered
 almost  4000 bugs since the time it has been operational as a continous
-automated fuzzer\cite{syzbotappspot}.
+automated fuzzer\cite{Syzbot}.
 
 The following configuration options are relevant when fuzzing the kernel:
 
 \begin{itemize}
 \item The Kernel Address Sanitizer (KASAN): Using compiler instrumentation, validity checks are inserted to memory accesses, thus revealing memory safety errors such as \
-  out-of-bound access and use-after-free. For better error reports containing stack traces, one can also enable the option CONFIG\_STACKTRACE along KASAN\cite{Kasan}.
+  out-of-bound access and use-after-free. For better error reports containing stack traces, one can also enable the option CONFIG\_STACKTRACE along KASAN\cite{KernelAddressSanitizer}.
 \item Kcov: kcov exposes coverage information for the kernel in a form suitable for coverage-guided fuzzing. Coverage data is exposed via the kcov debugfs file, located under /sys/kernel/debug/kcov. Kcov \
-  aims not to collect as much coverage as possible, but stable coverage (function of the input), by disabling coverage collection from interrupts and from non-deterministic parts of the kernel\cite{KcovCodeCoverage}
+  aims not to collect as much coverage as possible, but stable coverage (function of the input), by disabling coverage collection from interrupts and from non-deterministic parts of the kernel\cite{KcovCodeCoveragea}
 \end{itemize}
 
 %%
@@ -277,12 +277,109 @@ The following configuration options are relevant when fuzzing the kernel:
 %% virtual machines and collects coverage information using KCOV. Syzkaller also comes with a systemcall specification
 %% language (syzlang), designed to aid in targetting specific subsystems inside kernels \cite{syzkaller}.
 
-\subsection{Challenges posed by ibverbs applications}\label{s:ibverbs-challenges}
+\subsection{RDMA-aware applications}
 
-Reaching full coverage for IB verbs applications is not trivial, as the Queue Pairs (similar to sockets in
-traditional network programming) are modeled as a state machine.
+In RDMA-aware applications, the program consumes the verbs API contained in the libibverbs library\footnote{\url{https://github.com/linux-rdma/rdma-core}}.
+The API handles the control path for creation, modification, querying and destruction of resources used by RDMA applications.
 
-\subsubsection{Programming with ibverbs}
+For the control path, the library uses system calls that are handled by file operations on device nodes
+registered by the uverbs kernel module. The kernel module passes control down to lower level drivers.
+These lower level drivers can be drivers for real hardware, or software drivers, like SoftRoCE.
+
+In contrast to the control path,  the library implements the data path with calls that are made
+directly to the low level drivers, enabling the kernel bypass\cite{}.
+
+The queue pair one of the most important resources created by RDMA applications. It represents an end node
+in a communication channel and represents state of the application by the queue pair state machine:
+
+There are different types of queue pairs:
+\begin{itemize}
+  \item RC
+  \item UC
+\end{itemize}
+
+
+%% Queue pairs are the main actors in ibverbs applications. You can compare the queue pair
+%% to a socket in traditional network programming, as queue pairs represent a connection as much as sockets do.
+
+
+
+
+%% ibverbs, library for rdma aware apps
+
+%% what is difficult to fuzz about rdma apps
+
+\subsubsection{Transpor Layer: The Base Transport Headers} % OR: role of the device driver before
+
+One of the tasks of low level drivers for RDMA devices is to process
+packet headers of the transport layer protocol. This task roughly consists
+of assigning a queue pair to the packet, performing requested operations like
+read or write and performing sanity checks.
+
+These transport layer headers are called
+base transport headers, and contain information describing the
+requested operation and the  destination queue pair.
+
+There are also header extensions for the base headers, but their presence is dictated
+by the operation code. We will focus in this section on base transport headers,
+because they are common to all RDMA traffic.
+
+Base transport headers are 96 bits long, Table
+\ref{tab:bthfields} shows the corresponding field descriptions. The order in which fields
+are listed in Table \ref{tab:bthfields} coincide with the layout of the actual header.
+
+\begin{table}[h]
+  \begin{tabular}{|| m{10em} | m{4em} | m{3em} | m{15em} ||}
+    \hline
+    Field Name & Field Abbreviation & Field Size (bits) & Description\\
+    \hline
+    Opcode & OpCode & 8 & Indicates the packet type, also specifies which extension headers follow the base transport header.\\
+    \hline
+    Solicited Event & SE & 1 &  The requester sets this bit to 1 to specify that the responder shall invoke the Completion Queue event handler.\\
+    \hline
+    MigReq & M & 1 &  Used to communicate Path Migration State, path migration refers to both communication partners agreeing to use a new communication path\\
+    \hline
+    Pad Count & PadCnt & 2 &  Number of pad bytes added to the headers to align the payload to a 4 byte boundary.\\
+    \hline
+    Transport Header Version & TVer & 4 &  Specifies the Transport version used for the packet, it is set to 0x0.\\
+    \hline
+    Partition Key & P\_KEY & 16 &  Partitioning allows isolation among systems sharing the same fabrics. If using partition, this field is required to match partition key stored at the receiver or else the packet will be discarded\\
+    \hline
+    Reserved (variant) & & 8 &  transmited as 0s, this field is ignored on the receiver side.\\
+    \hline
+    Destination QP & DestQP & 24 &  specifies a number to identify the destination queue pair.\\
+    \hline
+    Acknowledge Request & A & 1 &  If this bit is set, responder should schedule an acknowledgment packet on the associated queue pair.\\
+    \hline
+    Reserved & & 7 &  transmited as 0s, ignored by receiver. \\
+    \hline
+    Packet Sequence Number & PSN & 24 &  Identifies the position of a packet in a sequence of packets, used e.g. to recognized lost packets.\\
+    \hline
+  \end{tabular}
+  \caption[Base Transport Header Fields]{Base Transport Header Fields, adapted from\cite{infinibandvol107}}
+  \label{tab:bthfields}
+\end{table}
+
+%% why? explain queue pair state machine, show states requiring a connection
+\subsubsection{Challenges posed for fuzzing}\label{s:ibverbs-challenges}
+
+Reaching full coverage for ibverbs applications is not trivial. In order to perform RDMA operations, establishment of
+a connection to the remote host, as well as appropriate permissions need to be set up first. The mechanism for accomplishing
+these tasks is the queue pair\cite{rdmamanual}. A connected queue pair
+needs information from the remote queue pair in order to transition to a ready state.
+For connected queue pair types, ready states represent connected queue pairs.
+
+At the time the device driver checks the base transport headers, it will also assert if there is an existing queue pair
+with the qpn found in the headers. It will also check if this queue pair is in a ready state; if any these conditions
+are not met, the driver will drop the packet.
+
+This means that a fuzzing application should either let 2 applications initialize and reach a ready state,
+or lead the target application to think it has connected with another application. After either condition is true,
+fuzzing can discover bugs that are tied to a ready state.
+
+
+
+% \subsubsection{Programming with ibverbs}
 
 %% TODO how does it work, basics, state machine
 %% specific bug => requires a specific state

@@ -10,8 +10,8 @@ from 3 and up to 7 times higher than the rest of the kernel\cite{chouEmpiricalSt
 In 2011, an analysis from bugs ranging from january 2010 to march 2011
 showed that 2/3 of errors originate from loadable modules\cite{chenLinuxKernelVulnerabilities2011}.
 
-One interesting finding of \cite{vanderstoepAndroidProtectingKernel2016} was that most kernel bugs
-are reached from userspace by the ioctl system call (around 60\%).
+One interesting finding of \cite{vanderstoepAndroidProtectingKernel2016} was that around 60\% kernel bugs
+are reached from userspace by the ioctl system call.
 
 %% There have been a manifold of approaches to fuzz the linux kernel and its device drivers, originating from different attack surfaces.
 
@@ -35,35 +35,34 @@ Looking at its C prototype:
   int ioctl(int fd, int request, ... /* arg */);
 \end{lstlisting}
 
-The third (optional) argument serves as a untyped pointer to memory. This is implemented as a variadic argument, for at the time
+The third (optional) argument serves as an untyped pointer to memory. This is implemented as a variadic argument, for at the time
 the interface was designed, void* was not valid C. Nonetheless, the interface expects a single pointer, as opposed to potentially
 many, which the variadic argument syntax would suggest.
 
-Commonly, handlers of ioctl calls are implemented as switch statements (on the second argument) that expect specific
+Commonly, handlers of ioctl calls are implemented as switch statements (on the second argument) which expect specific
 input on the third argument. This poses a challenge for fuzzing, as this cross dependency constitutes a problem for extracting
-the definitions of the data structures expected. There are tools that leverage taint tracking to recover input formats\cite{buzzfuzz}\cite{dowser}
+the definitions of the expected data structures. There are tools that leverage taint tracking to recover input formats\cite{buzzfuzz}\cite{dowser}
 but for ioctls, these techniques are not very effective\cite{corinaDIFUZEInterfaceAware2017} because they cannot recover this cross dependency between command identifier
 and optional argument.
 
-A naive approach could be to hook into the ioctl call on a running application (possibly using the userspace infiniband verbs library
-in our case), and mutate the arguments given to the ioctl call. Using techniques like the LD\_PRELOAD trick facilitates this,
-but results are rarely successful, as ioctl arguments are highly constrained in nature: An undefined request code
+A naive approach could be to hook into the ioctl call on an application linked to the libibverbs library and mutate the arguments given to ioctl calls. Using techniques like the LD\_PRELOAD trick facilitates this,
+but results are rarely successful because ioctl arguments are highly constrained in nature: An undefined request code
 would most likely end in a default clause that serves for catching bad request codes. Randomly modifying the optional argument
-without knowledge of its underlying structure is also not very likely of success.
-Nevertheless, even though not very effective, this is could still be a valid a approach to target a potentially error prone interface.
+without knowledge of its underlying structure is also not very likely to succeed.
+Nevertheless, even though not very effective, this could still be a valid approach to target a potentially error prone interface.
 
-By using static analysis, DIFUZE is overcome this difficulties by analyzing the source code of the device drivers,
+Using static analysis, DIFUZE has overcome this difficulties by analyzing the source code of the device drivers,
 collecting valid request codes and their corresponding data structures to be passed as a third parameter.
 
 DIFUZE undergoes 3 main stages to achieve its goal:
 
 \begin{itemize}
-  \item \textbf{Interface recovery:} Analyze source code and detect drivers enabled. Identify which device files are used to interact with them, which ioctl handlers they have registered and what arguments they expect to be passed. This phase outputs a set of tuples in the form of ( device filename, ioctl command, structure type definitions ). It is noteworthy that the output of this stage can also be exported in a human readable .json file, making it easily reusable for other applications.
+  \item \textbf{Interface recovery:} Analyze source code and detect enabled drivers. Identify which device files are used to interact with them, which ioctl handlers they have registered and what arguments they expect to be passed. This phase outputs a set of tuples in the form of ( device filename, ioctl command, structure type definitions ). It is noteworthy that the output of this stage can also be exported in a human readable .json file, making it easily reusable for other applications.
   \item \textbf{Structure generation:} Based on the definitions recovered from the previous step, this phase prepares conforming data structures to be passed to the actual execution environment.
-  \item \textbf{On-device exection:} As already mentioned, DIFUZE was specifially designed with android devices in mind. Structures that were generated are passed to the component in the target device in charge of issuing ioctl commands, while maintaining a heartbeat signal as means of monitoring for system crashes.
+  \item \textbf{On-device exection:} As already mentioned, DIFUZE was specifically designed with android devices in mind. Structures that were generated are passed to the component in the target device in charge of issuing ioctl commands, while maintaining a heartbeat signal as means of monitoring for system crashes.
 \end{itemize}
 
-DIFUZE was developed with an own fuzzing engine called MangoFuzz, it is however integratable with other Fuzzers (also done by the authors), like Syzkaller.
+DIFUZE was developed along with its own fuzzing engine called MangoFuzz, it is however integratable with other Fuzzers, like Syzkaller.
 
 %% originaly written with an own fuzzing engine called Mangofuzz, it can be however pipelined with other state of the art fuzzers like syzkaller as we will see, replacing steps 2 and 3.
 
@@ -77,14 +76,15 @@ system call fuzzer. It is however not only
 limited to linux, but can also be used for windows, BSD, among other
 kernels.
 
-The idea of syzkaller is fairly simple, yet its implementation is very effective: generate programs consisting of a variable number of system calls, with
+The idea of Syzkaller is fairly simple, yet its implementation is very effective: it generates
+programs consisting of a variable number of system calls, with
 concrete arguments that are increasingly mutated across iterations.
 
 %% how does syzkaller achieve its goal
 
 Syzkaller's architecture consists of various components: An in-host manager, called
 syz-manager which is in charge of starting VMs and persisting the programs that
-reside on the input corpus (back link to fuzzing) which consist of short programs issuing
+reside on the input corpus\ref{ss:fuzzer-components} which consist of short programs issuing
 system calls. It is also in charge of generating crash reports, including a minimized C reproducer program of the crash and kernel console output (like KASAN reports, or panic
 messages).
 
@@ -98,26 +98,26 @@ afterwards sent back to the managing process to update the corpus.
 Modifications made to programs are driven by heuristics and priorizations.\footnote{As with many other fuzzing projects, the inefficiency of searching through an enourmous space is made more bearable, by applying heuristics and priorization derived from experience: Do what usually works and not what does not likely trigger any bugs.}. Some of the highlights are\cite{vyukovSyzkallerAdventuresContinuous2020}:
 
 \begin{itemize}
-  \item Removing system calls might lead to new behaviour, but this is usually not the case, adding new system calls to a program usually leads to higher coverages.
+  \item Removing system calls might lead to new behaviour, but this is usually not the case. Adding new system calls to a program usually leads to higher coverages.
   \item Mutations on the arguments of a  system call with many and complex arguments are more likely to trigger new behaviour, than rather simple ones.
-  \item Add system calls that are related to others, e.g. if a program already has open, read or write on the file descriptor are more likely to trigger an error rather than say, getpid or fork.
+  \item Add system calls that are related to others, e.g. if a program already contains an open system call, a read or write system call on the file descriptor returned by open are more likely to trigger an error rather than say, the getpid or fork system calls.
 \end{itemize}
 
-\subsubsection{Specifying system calls using syzlang}
+\subsubsection{Specifying system calls using Syzlang}
 
 %% As we have already discussed, the system call interface is fairly generic
 %% (ioctl even more through its arguments). The System call description language
 %% Syzlang is a language devised with the intention to diferentiate system calls from
 %% another depending on their intetion.
 
-One of the core aspects of syzkaller is the ability to declare system calls using
-the system call description language syzlang. Its goal is to function as a template
+One of the core aspects of Syzkaller is the ability to declare system calls using
+the system call description language Syzlang. Its goal is to function as a template
 language for specify system calls based on extended types and specific or constant arguments,
-e.g. open('/dev/infiniband/uverbs0`, flags) is considered different syscall from open(`/dev/null`, flags).
+e.g. open('/dev/infiniband/uverbs0`, flags) is considered different system call from open(`/dev/null`, flags).
 
-A great advantage of syzlang is
+A great advantage of Syzlang is
 that it allows to describe dependencies between system calls by using resources.
-Resources are values that are meant to be passed from the output from one system call
+Resources are values that are meant to be passed from the output of one system call
 into the input of another.
 To illustrate why this is necessary, take for example the C function definitions found in the manpages:
 
@@ -128,7 +128,7 @@ To illustrate why this is necessary, take for example the C function definitions
 
 Judging by only this declarations, it is not entirely clear that the result of open
 is not any kind of integer, but one that plays the role of a file descriptor, similarly const char* is not
-just any string, but a file\footnote{it is hard to rely on variable names, so `pathname does not tell us much. Consider other system calls that use pathnames like chdir, where the variable name is just `path'.}. Furthermore,
+just any string, but a file\footnote{it is hard to rely on variable names, so `pathname' does not tell us much. Consider other system calls that use pathnames like chdir, where the variable name is just `path'.}. Furthermore,
 it is not trivial to extract any interdependence between both calls for the same reason.
 
 In contrast, syzlang declarations give a different type to this special kind of common types (int, const char*, etc.):
@@ -138,23 +138,24 @@ In contrast, syzlang declarations give a different type to this special kind of 
   read(fd fd, buf buffer[out], count len[buf]);
 \end{lstlisting}
 
-By seeing both call declarations and knowing that open returns an fd \emph{resource}, syzkaller is aware
-that this is resource needs to be passed as the first parameter to read, and \textbf{not just any random integer.}
+By seeing both call declarations and knowing that open returns an file descriptor \emph{resource}, Syzkaller is aware
+that this is resource needs to be passed as the first parameter to a read system call, and \textbf{not just any random integer.}
 
 \subsubsection{Fuzzing subsystems with syzkaller}
 
 Syzkaller can be configured to use only a subset of all system calls, which are all defined under
-the /sys/<arch>/ directories. This configuration allows syzkaller to fuzz
+the /sys/\textless architecture\textgreater/ directories. This configuration allows syzkaller to fuzz
 a specific subsystem in the kernel. With this information one can target specifically
-the infiniband rdma subsystem of the kernel.
+the infiniband RDMA subsystem of the kernel.
 
 %% it is by using this declarations that one can take the interfaces recovered from
 %% DIFUZE and make syzkaller aware of these.
 
 \subsubsection{Mellanox and syzkaller}
 
-On the linux plumber's conference of 2018, One of the biggest suppliers of RDMA enabled hardware, Mellanox,
-presented their collaboration with head syzkaller
+On the Linux Plumber's conference of 2018, One of the biggest suppliers of RDMA enabled hardware,
+Mellanox\footnote{Mellanox is also mostly in charge of the development  of verbs userspace libraries.},
+presented their collaboration with the head Syzkaller
 developer Dmitry Vyukov, with the goal of expanding syzkaller subsystem definitions with system calls
 that are handled by RDMA device drivers\cite{osherovichImprovingTestingRDMA2018}.
 
@@ -163,7 +164,7 @@ Following this conference, an extenisve description of the subsystem was incorpo
 Mellanox acknowledged during this conference that they use syzkaller for internal testing,
 %% 4:20:35
 and also mentioned running syzkaller over SoftRoCE, it will crash almost immediatly. It is then clear
-that this method is highly effective, but also this means that there is work to be done
+that this method is highly effective, but also this means that there is more work to be done
 for SoftRoCE.
 
 
@@ -177,27 +178,27 @@ for SoftRoCE.
 \subsection{Fastsyzkaller}
 
 By using a probabilistic model called N-Gram model, patterns of system calls sequences are marked as vulnerable based on their appearance and
-frequency inside programs that cause crashes. An N-Gram consists usually in the natural language processing domain as a subsequence
-of n words, in this case it is refered to a sequence of n system calls that appear on a program. Using the chain rule
-of probability, the likelihood presence of the nth word can be calculated, given the n-1 previous words (system calls).
+frequency inside programs that cause crashes. In the natural language processing domain, an N-Gram is defined as a subsequence
+of n words; in this case it is refered to a sequence of n system calls that appear on a program. Using the chain rule
+of probability, the likelihood presence of the nth word can be calculated, given the n-1 previous words (system calls)\cite{}.
 
-By letting syzkaller run for two weeks, an initial input corpus is generated. Based on this input corpus,
+By letting syzkaller run for two weeks, an initial input corpus of programs is generated. Based on this input corpus,
 patterns of syscalls with length n are extracted from programs that cause crashes, and are marked as vulnerable
 patterns. The authors found the fixed value of n = 5 to be the most effective\cite{liFastSyzkallerImprovingFuzz2019}.
-Based on this five-gram patterns, new test cases were generated and introduced into the corpus.
+Based on these five-gram patterns, new test cases were generated and introduced into the corpus.
 
 Equiped with this preloaded corpus, slight modifications are made to the test case generation algorithm in order
-to enforce and preserve the presence of vulnerable system call patterns in programs, these are:
+to enforce and preserve the presence of vulnerable system call patterns in programs. These modifications are:
 
 \begin{itemize}
-  \item It can only insert system calls with are marked as being high priority, dictated by the probability given by N-Gram model.
-  \item It cannot remove or mutate system calls in a given sequence that is part of a vulnerable pattern.
-  \item It cannot splice test cases, as this might remove the presence of vulnerable patterns
+  \item The algorithm can only insert system calls which are marked as being high priority, dictated by the probability given by the N-Gram model.
+  \item The algorithm cannot remove or mutate system calls in a given sequence that is part of a vulnerable pattern.
+  \item The algorithm cannot splice test cases, as this might remove the presence of vulnerable patterns.
 \end{itemize}
 
 Fastsyzkaller was found to be 3 times more effective in bug finding than syzkaller during a 4-week time period.
-By analyzing the programs generated by rdma-syzkaller, one can see that many of the programs that do not generated are very short, consisting
-of 1 - 2 system calls, where programs that generate crashes are at least 3 system calls long. Specifically fuzzing the rdma subsystem using this
+By analyzing the programs generated by RDMA-syzkaller, one can see that many of the programs that do not generated are very short, consisting
+of 1 - 2 system calls, where programs that generate crashes are at least 3 system calls long. Specifically fuzzing the RDMA subsystem using this
 approach can provide efficiency gains.
 
 
