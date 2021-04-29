@@ -279,37 +279,72 @@ The following configuration options are relevant when fuzzing the kernel:
 
 \subsection{RDMA-aware applications}
 
-In RDMA-aware applications, the program consumes the verbs API contained in the libibverbs library\footnote{\url{https://github.com/linux-rdma/rdma-core}}.
-The API handles the control path for creation, modification, querying and destruction of resources used by RDMA applications.
+%% was released in 2002, bit historical, but I want to mention this
+%% to say what libibverbs are
+The RDMA Verbs Specification internet draft describes the abstract
+interface for RDMA aware NICs, and provides a semantic definition of this
+interface called Verbs\cite{hillandRDMAProtocolVerbs}.
+
+Libibverbs provides an implementation of the Verbs interface\footnote{hosted at \url{https://github.com/linux-rdma/rdma-core}}. User space
+applications can consume the API of libibverbs to interact with
+the kernel modules for control path operations and to interact with the drivers asociated
+to RDMA-aware devices.
+
+The libibverbs API handles the control path for creation, modification, querying and destruction of resources used by RDMA applications.
 
 For the control path, the library uses system calls that are handled by file operations on device nodes
 registered by the uverbs kernel module. The kernel module passes control down to lower level drivers.
-These lower level drivers can be drivers for real hardware, or software drivers, like SoftRoCE.
+These lower level drivers can be drivers for real hardware, or drivers for software devices, like SoftRoCE.
 
 In contrast to the control path,  the library implements the data path with calls that are made
 directly to the low level drivers, enabling the kernel bypass\cite{}.
 
-The queue pair one of the most important resources created by RDMA applications. It represents an end node
-in a communication channel and represents state of the application by the queue pair state machine:
+The queue pair one of the most important resources created by RDMA applications, it represents an end node
+in a communication channel. For each transport mode (TODO:in verbs?) there is a different type of queue pair\cite{rdmamanual}:
 
-There are different types of queue pairs:
 \begin{itemize}
-  \item RC
-  \item UC
+  \item Reliable Connection (RC): A queue pair is associated with only one other queue pair. Similar to TCP connections, packets are acknowledged and guaranteed to arrive in order.
+  \item Unreliable Connection (UC): A queue pair is associated with only one other queue pair, packet delivery is not guaranteed.
+  \item Unreliable Datagram (UD): A queue pair may receive or transmit single packets from/to any other UD queue pair.
 \end{itemize}
 
+After being created, a queue pair is still not ready to receive or send data through a channel; the queue pair must be first
+transitioned through several states, shown in Figure \ref{fig:qpstatemachine}.
 
-%% Queue pairs are the main actors in ibverbs applications. You can compare the queue pair
-%% to a socket in traditional network programming, as queue pairs represent a connection as much as sockets do.
+\begin{figure}[h!]
+  \centering
+  \includegraphics[height=8cm, keepaspectratio]{qpstatemachine}
+  \caption[Queue pair state machine]{The queue pair state machine, slightly adapted from \cite{QPStateMachine2012}.}
+  \label{fig:qpstatemachine}
+\end{figure}
+
+%% A WQ is either a SEND work queue or a RECEIVE work queue
+%% QPs have both queues associated to them
+
+The Queue Pair consists of two Work Queues, a Send Queue and a Receive
+Queue. The Work Queues handle sending and receiving messages.
+An application can post Work Requests in the context of a Queue Pair, in
+doing so, the application asks the RDMA device to handle the task.
+A Work Request can be polled for completion, this operation will yield
+the status of the Work Request that was posted. Depending on the transport
+mode and the Work Request, a successful status can depend on the receiver
+side to answer with an acknowledgment.
 
 
+%% MENTION WR => Hardware task?
 
+Directly after creation, a Queue Pair is in the reset state. In the reset state, a Queue Pair cannot receive, nor send any packets.
 
-%% ibverbs, library for rdma aware apps
+TODO: talk avout the states and the state transitions.
 
-%% what is difficult to fuzz about rdma apps
+lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum,
+lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum,
+lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum,
+lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum,
+lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum,
+lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum,
 
-\subsubsection{Transpor Layer: The Base Transport Headers} % OR: role of the device driver before
+\subsubsection{Transport Layer: The Base Transport Headers} % OR: role of the device driver before
 
 One of the tasks of low level drivers for RDMA devices is to process
 packet headers of the transport layer protocol. This task roughly consists
@@ -370,7 +405,7 @@ needs information from the remote queue pair in order to transition to a ready s
 For connected queue pair types, ready states represent connected queue pairs.
 
 At the time the device driver checks the base transport headers, it will also assert if there is an existing queue pair
-with the qpn found in the headers. It will also check if this queue pair is in a ready state; if any these conditions
+with the qpn found in the headers. It will also check if this queue pair is in a ready state; if any of these conditions
 are not met, the driver will drop the packet.
 
 This means that a fuzzing application should either let 2 applications initialize and reach a ready state,
@@ -435,30 +470,3 @@ fuzzing can discover bugs that are tied to a ready state.
 %% community project, with help from IBM, Mellanox and other companies.This software driver provides us an
 %% uncomplicated manner to test RDMA technologies without needing to use real hardware, it provides a complete RDMA
 %% stack implementation over any NIC \cite{mellanox-community}.
-
-%% % running \\ \$ modinfo rdma\_rxe \\ inside the shell, reveals that this module depends on the following modules: ib\_core, ip6\_udp\_tunnel, udp\_tunnel, ib\_uverbs
-%% % all which are as well loaded into the kernel when issuing the command \\ \$ modprobe rdma\_rxe \\
-%% % modprobe loads a module into the kernel, while also loading the modules on which it depends on \cite{ldd3}.
-%% % TODO: Maksym => this definitely does not go into the main body of the text, if you are so eager to conclude it, use appendecies.
-
-%% % udev is a program that enables Linux to provide a persistent device-naming system
-%% % in the /dev directory \cite{kroah-hartman06}
-
-%% % To get Soft-RoCE capabilities, you need to install the kernel and user space libraries on both servers:
-%% % We are mainly interested in the rdma\_rxe kernel module, Software RDMA over Ethernet, provides a software implementation of the RoCEv2 Protocol, cite manpages.
-
-
-%% % TODO: is this necesary? are we using specifically InfiniBand technology? => modules are listed under /drivers/infiniband, so Ill guess yes
-
-
-%% % running \\ \$ modinfo rdma\_rxe \\ inside the shell, reveals that this module depends on the following modules: ib\_core, ip6\_udp\_tunnel, udp\_tunnel, ib\_uverbs
-
-%% % all which are as well loaded into the kernel when issuing the command \\ \$ modprobe rdma\_rxe \\
-%% % modprobe loads a module into the kernel, while also loading the modules on which it depends on \cite{ldd3}.
-
-
-%% % udev is a program that enables Linux to provide a persistent device-naming system
-%% % in the /dev directory \cite{kroah-hartman06}
-
-%% % To get Soft-RoCE capabilities, you need to install the kernel and user space libraries on both servers:
-%% % We are mainly interested in the rdma\_rxe kernel module, Software RDMA over Ethernet, provides a software implementation of the RoCEv2 Protocol, cite manpages.
