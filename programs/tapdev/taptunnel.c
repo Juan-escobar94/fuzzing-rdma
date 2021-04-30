@@ -135,11 +135,13 @@ void fuzz_ib_bth(char* ib_bth, int bth_size, int rounds) {
       case IB_SMPT:
         /* 0xF8 = 0b11111000 */
         /* tver is bits 5-8, should not be modified */
-        ib_bth[IB_SMPT] = ib_bth[IB_SMPT] ^ (random_byte & 0xF8);
+        ib_bth[IB_SMPT] = ib_bth[IB_SMPT] ^ (random_byte & 0xF0);
         break;
       case IB_PKEY_B1:
+        ib_bth[IB_PKEY_B1] = ib_bth[IB_PKEY_B1] ^ random_byte;
         break;
       case IB_PKEY_B2:
+        ib_bth[IB_PKEY_B2] = ib_bth[IB_PKEY_B2] ^ random_byte;
         break;
       case IB_FR_BR_RESERVED:
         ib_bth[IB_FR_BR_RESERVED] = ib_bth[IB_FR_BR_RESERVED] ^ random_byte;
@@ -173,11 +175,13 @@ void fuzz_ib_bth(char* ib_bth, int bth_size, int rounds) {
 struct config_params {
   char* client_dev_name;
   char* server_dev_name;
+  char* log_file;
 };
 
 struct config_params config = {
  .client_dev_name = "tap2",
- .server_dev_name = "tap3"
+ .server_dev_name = "tap3",
+ .log_file = "./packet_dump.log"
 };
 
 int main() {
@@ -247,7 +251,7 @@ int main() {
       nread_from_client = read(client_tap_fd, buffer_client, sizeof(buffer_client));
       printf("read %d from %s\n", nread_from_client, client_dev_name);
 
-      dump_buffer_bytes(buffer_client, nread_from_client);
+      // dump_buffer_bytes(buffer_client, nread_from_client);
 
       enum buffer_type buf_type = check_buffer_type(buffer_client, nread_from_client);
       switch(buf_type) {
