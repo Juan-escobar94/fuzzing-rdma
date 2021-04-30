@@ -55,15 +55,15 @@ DMA operations to be initated locally and remotely\cite{infinibandvol107}.
 \subsection{The Linux Kernel}
 
 
-As the SoftRoCE driver operates as a subsystem in the linux kernel, it is pertinent to briefly
+As the SoftRoCE driver operates as a subsystem in the Linux Kernel, it is pertinent to briefly
 discuss the implications encompassed by this.
 
-Similar to most Unix kernels, the linux kernel is of monotithic nature. All kernel layers
+Similar to most Unix kernels, the Linux Kernel is of monotithic nature. All kernel layers
 are integrated into a single program, all of which run under the kernel's privileged execution
 mode. As a consquence of this, and since security checks are only enforced by the kernel code,
 if there are secutiry vulnerabilities inside the kernel, then the whole system has vulnerabilities.
 
-One main feature of the linux kernel is its ability to extend its functionality during runtime using
+One main feature of the Linux Kernel is its ability to extend its functionality during runtime using
 modules. Modules are pieces of code that can be dynamically linked or unlinked at runtime,
 adding functionality to the kernel\cite{korbethLinuxDeviceDrivers2005}.
 
@@ -194,11 +194,11 @@ There are two broad classes of monitoring frameworks\cite{mcnallyFuzzingStateArt
 \end{itemize}
 
 %% IMPORTANT: Fuzzing linux kernel, explain compile options relevant for fuzzing
-\subsection{Fuzzing the linux kernel}
+\subsection{Fuzzing the Linux Kernel}
 %% https://youtu.be/YwX4UyXnhz0?t=452
 %%
 
-As opposed to userspace fuzzing, fuzzing the linux kernel
+As opposed to userspace fuzzing, fuzzing the Linux Kernel
 presents some challenges and limitations. As an example, in single threaded
 userspace applications, coverage is a function of the input, it has a
 deterministic behaviour; collecting coverage for the kernel however, is
@@ -214,7 +214,7 @@ execution interleavings of threads to be triggered, they are consequently hardly
 thread interleavings.
 
 Despite this challenges, fuzzing has proven to be excelent approach to testing the
-kernel's code base: the system call fuzzer syzkaller alone has discovered
+kernel's code base: the system call fuzzer Syzkaller alone has discovered
 almost  4000 bugs since the time it has been operational as a continous
 automated fuzzer\cite{Syzbot}.
 
@@ -277,15 +277,15 @@ The following configuration options are relevant when fuzzing the kernel:
 %% virtual machines and collects coverage information using KCOV. Syzkaller also comes with a systemcall specification
 %% language (syzlang), designed to aid in targetting specific subsystems inside kernels \cite{syzkaller}.
 
-\subsection{RDMA-aware applications}
+\subsection{RDMA applications}
 
 %% was released in 2002, bit historical, but I want to mention this
 %% to say what libibverbs are
-The RDMA Verbs Specification internet draft describes the abstract
-interface for RDMA aware NICs, and provides a semantic definition of this
-interface called Verbs\cite{hillandRDMAProtocolVerbs}.
+The `RDMA Verbs Specification' internet draft describes the abstract
+interface for RDMA-aware NICs and provides a semantic definition of this
+interface. This semantic definition is simply called Verbs\cite{hillandRDMAProtocolVerbs}.
 
-Libibverbs provides an implementation of the Verbs interface\footnote{hosted at \url{https://github.com/linux-rdma/rdma-core}}. User space
+Libibverbs provides an implementation of the Verbs interface\footnote{Hosted at \url{https://github.com/linux-rdma/rdma-core}}. User space
 applications can consume the API of libibverbs to interact with
 the kernel modules for control path operations and to interact with the drivers asociated
 to RDMA-aware devices.
@@ -293,28 +293,31 @@ to RDMA-aware devices.
 The libibverbs API handles the control path for creation, modification, querying and destruction of resources used by RDMA applications.
 
 For the control path, the library uses system calls that are handled by file operations on device nodes
-registered by the uverbs kernel module. The kernel module passes control down to lower level drivers.
-These lower level drivers can be drivers for real hardware, or drivers for software devices, like SoftRoCE.
+registered by the uverbs kernel module. The kernel module passes control down to lower-level drivers.
+These lower-level drivers can be drivers for real hardware, or drivers for software devices, like SoftRoCE.
 
 In contrast to the control path,  the library implements the data path with calls that are made
-directly to the low level drivers, enabling the kernel bypass\cite{}.
+directly to the low level drivers of the NIC using a doorbell mechanism: the host CPU %via Programmed IO
+writes a short doorbell message directly to the
+NIC, indicating there is work to be done\cite{KaliaUsingRDMAEfficiently2014}. This data flow mechanism completely circumvents the
+host Kernel, enabling the Kernel bypass\cite{kaliaDesignGuidelinesHigh2016}.
 
-The queue pair one of the most important resources created by RDMA applications, it represents an end node
-in a communication channel. For each transport mode (TODO:in verbs?) there is a different type of queue pair\cite{rdmamanual}:
+The Queue Pair one of the most important resources managed by RDMA applications, it represents an endpoint
+in a communication channel. There are different transport modes that can be selected when establishing a Queue Pair\cite{rdmamanual}:
 
 \begin{itemize}
-  \item Reliable Connection (RC): A queue pair is associated with only one other queue pair. Similar to TCP connections, packets are acknowledged and guaranteed to arrive in order.
-  \item Unreliable Connection (UC): A queue pair is associated with only one other queue pair, packet delivery is not guaranteed.
-  \item Unreliable Datagram (UD): A queue pair may receive or transmit single packets from/to any other UD queue pair.
+  \item Reliable Connection (RC): A Queue Pair is associated with only one other Queue Pair. Similar to TCP connections, packets are acknowledged and guaranteed to arrive in order.
+  \item Unreliable Connection (UC): A Queue Pair is associated with only one other Queue Pair, packet delivery is not guaranteed.
+  \item Unreliable Datagram (UD): A Queue Pair may receive or transmit single packets from/to any other UD queue pair.
 \end{itemize}
 
-After being created, a queue pair is still not ready to receive or send data through a channel; the queue pair must be first
+After being created, a Queue Pair is still not ready to receive or send data through a channel; the Queue Pair must be first
 transitioned through several states, shown in Figure \ref{fig:qpstatemachine}.
 
 \begin{figure}[h!]
   \centering
   \includegraphics[height=8cm, keepaspectratio]{qpstatemachine}
-  \caption[Queue pair state machine]{The queue pair state machine, slightly adapted from \cite{QPStateMachine2012}.}
+  \caption[Queue Pair state machine]{The Queue Pair state machine, slightly adapted from \cite{QPStateMachine2012}.}
   \label{fig:qpstatemachine}
 \end{figure}
 
@@ -328,35 +331,39 @@ doing so, the application asks the RDMA device to handle the task.
 A Work Request can be polled for completion, this operation will yield
 the status of the Work Request that was posted. Depending on the transport
 mode and the Work Request, a successful status can depend on the receiver
-side to answer with an acknowledgment.
+side to answer with an acknowledgment packet.
 
 
-%% MENTION WR => Hardware task?
+Directly after creation, a Queue Pair is in a Reset state. In the Reset state,
+a Queue Pair cannot post any Work Requests to any
+of its Work Queues, and any packets it receives will be silently dropped.
+A Queue Pair can transition from one state to another when the program calls ibv\_modify\_qp() ---
+transitions marked with blue in Figure \ref{fig:qpstatemachine} originate from this function call.
+Work Requests may be posted to the Receive Queue once the Queue Pair has transitioned to a Ready To Receive (RTR) state,
+similarly Work Requests may be posted to the Send Queue after reaching the Ready To Send (RTS) state. The Queue Pair will silently drop
+packets until it has at least reached the RTR state.
 
-Directly after creation, a Queue Pair is in the reset state. In the reset state, a Queue Pair cannot receive, nor send any packets.
+The Send Queue Error (SQE) state transition happens automatically
+after a Work Request in the Send Queue ends with an error\cite{QPStateMachine2012}. The Send Queue Drain (SQD) is a special state
+that won't process further Work Requests posted to the Send Queue\cite{QPStateMachine2012}. Both the SQD and SQE state handle incoming packets\cite{barakVerbsProgrammingTutorial2014}.
 
-TODO: talk avout the states and the state transitions.
+Errors ocurring during the ibv\_modify\_qp() call will bring the Queue Pair
+to the Error state, Work Request errors may transition the Queue Pair to this state as well\cite{QPStateMachine2012}.
 
-lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum,
-lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum,
-lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum,
-lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum,
-lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum,
-lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum, lorem impsum,
 
-\subsubsection{Transport Layer: The Base Transport Headers} % OR: role of the device driver before
+\subsubsection{Transport Layer: The Base Transport Header} % OR: role of the device driver before
 
 One of the tasks of low level drivers for RDMA devices is to process
 packet headers of the transport layer protocol. This task roughly consists
-of assigning a queue pair to the packet, performing requested operations like
+of assigning a queue pair to the packet, performing requested memory access operations like
 read or write and performing sanity checks.
 
 These transport layer headers are called
 base transport headers, and contain information describing the
 requested operation and the  destination queue pair.
 
-There are also header extensions for the base headers, but their presence is dictated
-by the operation code. We will focus in this section on base transport headers,
+There are also header extensions for the base header, but their presence is dictated
+by the operation code. We will focus in this section on base transport header,
 because they are common to all RDMA traffic.
 
 Base transport headers are 96 bits long, Table
@@ -364,31 +371,31 @@ Base transport headers are 96 bits long, Table
 are listed in Table \ref{tab:bthfields} coincide with the layout of the actual header.
 
 \begin{table}[h]
-  \begin{tabular}{|| m{10em} | m{4em} | m{3em} | m{15em} ||}
+  \begin{tabular}{| m{10em} | m{3em} | m{15em} |}
     \hline
-    Field Name & Field Abbreviation & Field Size (bits) & Description\\
+    Field Name &  Field Size (bits) & Description\\
     \hline
-    Opcode & OpCode & 8 & Indicates the packet type, also specifies which extension headers follow the base transport header.\\
+    Opcode & 8 & Indicates the packet type, also specifies which extension headers follow the base transport header.\\
     \hline
-    Solicited Event & SE & 1 &  The requester sets this bit to 1 to specify that the responder shall invoke the Completion Queue event handler.\\
+    Solicited Event & 1 &  The requester sets this bit to 1 to specify that the responder shall invoke the Completion Queue event handler.\\
     \hline
-    MigReq & M & 1 &  Used to communicate Path Migration State, path migration refers to both communication partners agreeing to use a new communication path\\
+    MigReq & 1 &  Used to communicate Path Migration State, path migration refers to both communication partners agreeing to use a new communication path\\
     \hline
-    Pad Count & PadCnt & 2 &  Number of pad bytes added to the headers to align the payload to a 4 byte boundary.\\
+    Pad Count & 2 &  Number of pad bytes added to the headers to align the payload to a 4 byte boundary.\\
     \hline
-    Transport Header Version & TVer & 4 &  Specifies the Transport version used for the packet, it is set to 0x0.\\
+    Transport Header Version & 4 &  Specifies the Transport version used for the packet, it is set to 0x0.\\
     \hline
-    Partition Key & P\_KEY & 16 &  Partitioning allows isolation among systems sharing the same fabrics. If using partition, this field is required to match partition key stored at the receiver or else the packet will be discarded\\
+    Partition Key & 16 &  Partitioning allows isolation among systems sharing the same fabrics. If using partition, this field is required to match partition key stored at the receiver or else the packet will be discarded\\
     \hline
-    Reserved (variant) & & 8 &  transmited as 0s, this field is ignored on the receiver side.\\
+    Reserved (variant) & 8 &  transmited as 0s, this field is ignored on the receiver side.\\
     \hline
-    Destination QP & DestQP & 24 &  specifies a number to identify the destination queue pair.\\
+    Destination QP & 24 &  specifies a number to identify the destination queue pair.\\
     \hline
-    Acknowledge Request & A & 1 &  If this bit is set, responder should schedule an acknowledgment packet on the associated queue pair.\\
+    Acknowledge Request & 1 &  If this bit is set, responder should schedule an acknowledgment packet on the associated queue pair.\\
     \hline
-    Reserved & & 7 &  transmited as 0s, ignored by receiver. \\
+    Reserved & 7 &  transmited as 0s, ignored by receiver. \\
     \hline
-    Packet Sequence Number & PSN & 24 &  Identifies the position of a packet in a sequence of packets, used e.g. to recognized lost packets.\\
+    Packet Sequence Number & 24 &  Identifies the position of a packet in a sequence of packets, used e.g. to recognize lost packets.\\
     \hline
   \end{tabular}
   \caption[Base Transport Header Fields]{Base Transport Header Fields, adapted from\cite{infinibandvol107}}
@@ -398,21 +405,22 @@ are listed in Table \ref{tab:bthfields} coincide with the layout of the actual h
 %% why? explain queue pair state machine, show states requiring a connection
 \subsubsection{Challenges posed for fuzzing}\label{s:ibverbs-challenges}
 
-Reaching full coverage for ibverbs applications is not trivial. In order to perform RDMA operations, establishment of
+Reaching full coverage for RDMA Verbs applications is not trivial. In order to perform RDMA operations, establishment of
 a connection to the remote host, as well as appropriate permissions need to be set up first. The mechanism for accomplishing
-these tasks is the queue pair\cite{rdmamanual}. A connected queue pair
-needs information from the remote queue pair in order to transition to a ready state.
-For connected queue pair types, ready states represent connected queue pairs.
+these tasks is the Queue Pair\cite{rdmamanual}. A Queue Pair defined for connected transport modes needs information from
+the remote Queue Pair in order to transition to a ready state.
 
-At the time the device driver checks the base transport headers, it will also assert if there is an existing queue pair
-with the qpn found in the headers. It will also check if this queue pair is in a ready state; if any of these conditions
+At the time the device driver checks the Base Transport Headers, it will also assert if there is an existing Queue Pair
+with the Queue Pair number found in the Destination QP field in the header.
+It will also check if this queue pair is in a ready state; if any of these conditions
 are not met, the driver will drop the packet.
 
 This means that a fuzzing application should either let 2 applications initialize and reach a ready state,
-or lead the target application to think it has connected with another application. After either condition is true,
-fuzzing can discover bugs that are tied to a ready state.
-
-
+or lead the target application to think it has connected with another application. As we have seen
+in the previous sections, Queue Pairs are modeled by a state machine and they must be carefully transitioned from one
+state to another. Since driver code enforces that the Queue Pair must be in a specific state for operations like
+handling incoming packets, there might be bugs that are tied to specific states. It is meaningful to test
+RDMA applications running in a connected environmnent.
 
 % \subsubsection{Programming with ibverbs}
 

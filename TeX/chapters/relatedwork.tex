@@ -41,7 +41,7 @@ many, which the variadic argument syntax would suggest.
 
 Commonly, handlers of ioctl calls are implemented as switch statements (on the second argument) which expect specific
 input on the third argument. This poses a challenge for fuzzing, as this cross dependency constitutes a problem for extracting
-the definitions of the expected data structures. There are tools that leverage taint tracking to recover input formats\cite{buzzfuzz}\cite{dowser}
+the definitions of the expected data structures. There are tools that leverage taint tracking to recover input formats\cite{ganeshTaintbasedDirectedWhitebox2009}\cite{hallerDowserGuidedFuzzer2013}
 but for ioctls, these techniques are not very effective\cite{corinaDIFUZEInterfaceAware2017} because they cannot recover this cross dependency between command identifier
 and optional argument.
 
@@ -72,7 +72,7 @@ DIFUZE was developed along with its own fuzzing engine called MangoFuzz, it is h
 \subsection{Syzkaller}
 
 Syzkaller is a grammar based, coverage guided unsupervised
-system call fuzzer. It is however not only
+system call fuzzer \cite{GoogleSyzkaller2021}. It is however not only
 limited to linux, but can also be used for windows, BSD, among other
 kernels.
 
@@ -84,7 +84,7 @@ concrete arguments that are increasingly mutated across iterations.
 
 Syzkaller's architecture consists of various components: An in-host manager, called
 syz-manager which is in charge of starting VMs and persisting the programs that
-reside on the input corpus\ref{ss:fuzzer-components} which consist of short programs issuing
+reside on the input corpus (see subsection \ref{ss:fuzzer-components}) which consist of short programs issuing
 system calls. It is also in charge of generating crash reports, including a minimized C reproducer program of the crash and kernel console output (like KASAN reports, or panic
 messages).
 
@@ -138,7 +138,7 @@ In contrast, syzlang declarations give a different type to this special kind of 
   read(fd fd, buf buffer[out], count len[buf]);
 \end{lstlisting}
 
-By seeing both call declarations and knowing that open returns an file descriptor \emph{resource}, Syzkaller is aware
+By seeing both call declarations and knowing that open returns a file descriptor \emph{resource}, Syzkaller is aware
 that this is resource needs to be passed as the first parameter to a read system call, and \textbf{not just any random integer.}
 
 \subsubsection{Fuzzing subsystems with syzkaller}
@@ -153,15 +153,14 @@ the infiniband RDMA subsystem of the kernel.
 
 \subsubsection{Mellanox and syzkaller}
 
-On the Linux Plumber's conference of 2018, One of the biggest suppliers of RDMA enabled hardware,
-Mellanox\footnote{Mellanox is also mostly in charge of the development  of verbs userspace libraries.},
+On the Linux Plumber's conference of 2018, Mellanox\footnote{Mellanox is also mostly in charge of the development  of verbs userspace libraries libibverbs.} --- one of the biggest suppliers of RDMA enabled hardware,
 presented their collaboration with the head Syzkaller
 developer Dmitry Vyukov, with the goal of expanding syzkaller subsystem definitions with system calls
 that are handled by RDMA device drivers\cite{osherovichImprovingTestingRDMA2018}.
 
-Following this conference, an extenisve description of the subsystem was incorporated into syzkaller.
+Following this conference, an extensive description of the RDMA subsystem was incorporated into Syzkaller's repository on github.
 
-Mellanox acknowledged during this conference that they use syzkaller for internal testing,
+Mellanox acknowledged during this conference that they use Syzkaller for internal testing,
 %% 4:20:35
 and also mentioned running syzkaller over SoftRoCE, it will crash almost immediatly. It is then clear
 that this method is highly effective, but also this means that there is more work to be done
@@ -180,7 +179,7 @@ for SoftRoCE.
 By using a probabilistic model called N-Gram model, patterns of system calls sequences are marked as vulnerable based on their appearance and
 frequency inside programs that cause crashes. In the natural language processing domain, an N-Gram is defined as a subsequence
 of n words; in this case it is refered to a sequence of n system calls that appear on a program. Using the chain rule
-of probability, the likelihood presence of the nth word can be calculated, given the n-1 previous words (system calls)\cite{}.
+of probability, the likelihood presence of the nth word can be calculated, given the n-1 previous words (system calls)\cite{jurafskySpeechLanguageProcessing2000}.
 
 By letting syzkaller run for two weeks, an initial input corpus of programs is generated. Based on this input corpus,
 patterns of syscalls with length n are extracted from programs that cause crashes, and are marked as vulnerable

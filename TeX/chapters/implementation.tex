@@ -1,0 +1,117 @@
+\section{Implementation} % maybe this is still part of design
+
+To carry out the network architecture that will allow us to seamlessly read and modify
+network traffic, as proposed in section \ref{s:design}, we can use the combination of
+`quick Emulator` QEMU and the Kernel-based Virtual Machine (KVM) as a virtualizer. The qemu-system command which
+starts a virtual machine allows us to specify parameters such as:
+\begin{itemize}
+  \item The kernel boot image,
+  \item Image files from which we can provide a prepared file system,
+  \item Virtual network interfaces.
+\end{itemize}
+
+In this way, QEMU can create a virtual network device
+inside the guest environment (e.g. a PCI network interface) and we can specify a backend to the
+guest network interface. This backend is a virtual network interface that interacts with the
+emulated NIC:\@ it puts the packets from the guest into the host and vice-versa\cite{DocumentationNetworkingQEMU}.
+
+A TAP device is a virtual interface that provides packet reception and transmission for user space programs.
+TAP devices operate on the data link layer, they carry ethernet frames.
+A TAP device can be created from a user program by opening the device `/dev/net/tun'  and issuing a
+corresponding ioctl() call to register a new interface with the kernel\cite{krasnyanskyUniversalTUNTAP}.
+Listing \ref{lst:tapifr} shows a snippet demonstrating how to register/open a TAP device.
+
+%% snippet of the open and ioctl call.
+\begin{lstlisting}[caption={Registering/opening a TAP interface}, label={lst:tapifr},  style=CStyle]
+ #include <linux/if.h>
+ #include <linux/if_tun.h>
+
+  /* inside register/open device function */
+  struct ifreq interface;
+  int fd, err;
+
+  fd = open("dev/net/tun", O_RDWR);
+
+  /* check for errors */
+
+  memset(&interface, 0, sizeof(interface));
+  interface.ifr_flags = IFF_TAP;
+  interface.ifr_name = "tap0";
+
+  err = ioctl(fd, TUNSETIFF, (void *) &interface);
+
+  /* check for errors */
+
+  return fd;
+\end{lstlisting}
+
+
+
+Normally, the registered TAP device disappears as soon as the process that created the interface exits, but
+the interface can be made persistent with a further ioctl() call. Persistent interfaces can be opened
+by another process by issuing the exact same open() and ioctl() calls as when registering the interface
+for the first time.
+%This is part of what the ip tuntap command does\footnote{iproute2: https://git.kernel.org/pub/scm/network/iproute2/iproute2.git/ }
+A TAP interface is the type of backend we associate to the VM's network interface. However, a problem arises
+when we trying to open the TAP devices that are associated with the QEMU process: the ioctl() call
+fails and sets the global error variable ERRNO to EBUSY (device or resource busy).
+
+
+
+
+%% With the help of the machine emulator / virtualizer QEMU, ///I can create a pair of
+%% virtual machines running the custom kernel on a x86\_64 architecture.
+%% Using debootstrap, ///one can easily install a Debian system on
+%% the virtual machines, and specify all of the required packages
+%% for ///my test environment, including those necessary to compile and run applications
+%% using the verbs libraries.
+
+%% We///// want to be able to see traffic, % tap interfaces offer a solution
+
+%% By using TUN/TAP interfaces, the fuzzer can read all network traffic that goes
+%% through the TUN/TAP interface inside a user space program. As stated in
+%% the Kernel documentation, these interfaces can be seen as a simple point-to-point
+%% or ethernet device, which send and receive packets to and from a user space program.
+
+%% I///// can connect the network interface cards
+%% inside the virtual machines to a virtual interface visible to the host environment.
+
+%% % briefly explain tap interfaces
+
+%% Creating a TAP interface is possible by opening the `/dev/net/tun` device file.
+%% With the file descriptor resulting from the previous open system call, we can ask the operating system
+%% to create a TAP interface by issuing an ioctl system call, with the name of the interface we want to
+%% register. Once the program ends, the operating system removes this interface, unless another ioctl call
+%% is issued to make this interface persistent. The creation of the interface and the further ioctl call for persistence
+%% is roughly what the ip tuntap command does\footnote{iproute2: https://git.kernel.org/pub/scm/network/iproute2/iproute2.git/ }.
+
+%% % TODO: code snippet for creating such devices
+
+
+%% Unfortunately, we cannot reopen these interfaces in the context of proxy fuzzer process, since the QEMU
+%% process has already opened them; the respective ioctl system call fails and sets the
+%% global ERRNO variable to EBUSY (device or resource busy). To overcome this, we create a pair of
+%% virtual bridges, connect them to the tap interfaces mapped to the ethernet interfaces inside the virtual
+%% machines, and we create additional tap interfaces and also connect them to the bridge.
+
+%% TODO: Picture
+%%
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{proxyfuzzernetworkdetailed}
+  \caption[Proxy fuzzer network architecture]{Detailed network architecture for the proxy fuzzer}
+\end{figure}
+
+%% TODO: explain fuzzing loop, which fields not to fuzz, removed crc checks
+
+%% TODO: mention other approaches I tried (maybe in discussion)
+
+%% TODO: mention the benchmarks used and the program I devised myself to exchange infiniband traffic.
+
+%% TODO: mention implementation details, like header dumps for reproducibility, number of fuzzing rounds, fuzz after so many IB packets sent, etc.
+
+%% TODO: mention or implement AND mention: monitoring, continuous fuzzing.
+
+%% TODO:
+
+%% TODO: evaluate other fuzzers

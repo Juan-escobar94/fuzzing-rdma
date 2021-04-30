@@ -223,3 +223,131 @@ year = 2015
   file = {/home/juan/Zotero/storage/BMEJ3T39/upstream.html},
   howpublished = {https://syzkaller.appspot.com/upstream}
 }
+
+
+@misc{QPStateMachine2012,
+  title = {{{QP}} State Machine},
+  year = {2012},
+  month = may,
+  abstract = {Contents1 QP State transitions2 Reset state2.1 Description2.2 Work Requests2.3 Packets3 Init state3.1 Description3.2 Work Requests3.3 Packets4 RTR state4.1 Description4.2 Work Requests4.3 Packets5 RTS state5.1 Description5.2 Work Requests5.3 Packets6 SQD state6.1 Work Requests6.2 Packet7 SQE state7.1 Description7.2 Work Requests7.3 Packets8 Error state8.1 Description8.2 Work Requests8.3 Packet9 Summary Since a QP is one of the important objects...},
+  file = {/home/juan/Zotero/storage/KLL3QY3Q/qp-state-machine.html},
+  howpublished = {https://www.rdmamojo.com/2012/05/05/qp-state-machine/},
+  journal = {RDMAmojo}
+}
+
+
+@misc{hillandRDMAProtocolVerbs,
+  title = {{{RDMA Protocol Verbs Specification}}},
+  author = {Hilland {$<$}jeff.hilland@hp.com{$>$}, Jeff},
+  file = {/home/juan/Zotero/storage/J8W9VVWK/draft-hilland-rddp-verbs-00.html},
+  howpublished = {https://tools.ietf.org/html/draft-hilland-rddp-verbs-00},
+  language = {en}
+}
+
+
+@misc{GoogleSyzkaller2021,
+  title = {Google/Syzkaller},
+  year = {2015},
+  month = apr,
+  abstract = {syzkaller is an unsupervised coverage-guided kernel fuzzer},
+  copyright = {Apache-2.0 License         ,                 Apache-2.0 License},
+  howpublished = {https://github.com/google/syzkaller},
+  keywords = {fuzz-testing,fuzzer,fuzzing,kernel,linux,security,security-tools,security-vulnerability,testing}
+}
+
+@misc{barakVerbsProgrammingTutorial2014,
+  title = {Verbs Programming Tutorial},
+  author = {Barak, Dotan},
+  year = {2014},
+  howpublished = {https://www.cs.mtsu.edu/~waderholdt/6430/papers/ibverbs.pdf},
+  file = {/home/juan/Zotero/storage/FDSBDJ58/Barak - 2014 - Verbs programming tutorial.pdf},
+  language = {en}
+}
+
+
+@inproceedings{kaliaUsingRDMAEfficiently2014,
+  title = {Using {{RDMA}} Efficiently for Key-Value Services},
+  booktitle = {Proceedings of the 2014 {{ACM}} Conference on {{SIGCOMM}}},
+  author = {Kalia, Anuj and Kaminsky, Michael and Andersen, David G.},
+  year = {2014},
+  month = aug,
+  pages = {295--306},
+  publisher = {{Association for Computing Machinery}},
+  address = {{New York, NY, USA}},
+  doi = {10.1145/2619239.2626299},
+  abstract = {This paper describes the design and implementation of HERD, a key-value system designed to make the best use of an RDMA network. Unlike prior RDMA-based key-value systems, HERD focuses its design on reducing network round trips while using efficient RDMA primitives; the result is substantially lower latency, and throughput that saturates modern, commodity RDMA hardware. HERD has two unconventional decisions: First, it does not use RDMA reads, despite the allure of operations that bypass the remote CPU entirely. Second, it uses a mix of RDMA and messaging verbs, despite the conventional wisdom that the messaging primitives are slow. A HERD client writes its request into the server's memory; the server computes the reply. This design uses a single round trip for all requests and supports up to 26 million key-value operations per second with 5{$\mu$}s average latency. Notably, for small key-value items, our full system throughput is similar to native RDMA read throughput and is over 2X higher than recent RDMA-based key-value systems. We believe that HERD further serves as an effective template for the construction of RDMA-based datacenter services.},
+  file = {/home/juan/Zotero/storage/R24EN986/Kalia et al. - 2014 - Using RDMA efficiently for key-value services.pdf},
+  isbn = {978-1-4503-2836-4},
+  keywords = {infiniband,key-value stores,RDMA,ROCE},
+  series = {{{SIGCOMM}} '14}
+}
+
+
+
+@inproceedings{kaliaDesignGuidelinesHigh2016,
+  title = {Design Guidelines for High Performance {{RDMA}} Systems},
+  booktitle = {Proceedings of the 2016 {{USENIX Conference}} on {{Usenix Annual Technical Conference}}},
+  author = {Kalia, Anuj and Kaminsky, Michael and Andersen, David G.},
+  year = {2016},
+  month = jun,
+  pages = {437--450},
+  publisher = {{USENIX Association}},
+  address = {{USA}},
+  abstract = {Modern RDMA hardware offers the potential for exceptional performance, but design choices including which RDMA operations to use and how to use them significantly affect observed performance. This paper lays out guidelines that can be used by system designers to navigate the RDMA design space. Our guidelines emphasize paying attention to low-level details such as individual PCIe transactions and NIC architecture. We empirically demonstrate how these guidelines can be used to improve the performance of RDMA-based systems: we design a networked sequencer that outperforms an existing design by 50x, and improve the CPU efficiency of a prior high-performance key-value store by 83\%. We also present and evaluate several new RDMA optimizations and pitfalls, and discuss how they affect the design of RDMA systems.},
+  isbn = {978-1-931971-30-0},
+  series = {{{USENIX ATC}} '16}
+}
+
+
+@book{jurafskySpeechLanguageProcessing2000,
+  title = {Speech and {{Language Processing}}: {{An Introduction}} to {{Natural Language Processing}}, {{Computational Linguistics}}, and {{Speech Recognition}}},
+  shorttitle = {Speech and {{Language Processing}}},
+  author = {Jurafsky, Daniel and Martin, James H.},
+  year = {2020},
+  month = {Dec},
+  day =  {30},
+  edition = {draft},
+  address = {{USA}},
+  abstract = {From the Publisher: This book takes an empirical approach to language processing, based on applying statistical and other machine-learning algorithms to large corpora. Methodology boxes are included in each chapter. Each chapter is built around one or more worked examples to demonstrate the main idea of the chapter. Covers the fundamental algorithms of various fields, whether originally proposed for spoken or written language to demonstrate how the same algorithm can be used for speech recognition and word-sense disambiguation. Emphasis on web and other practical applications. Emphasis on scientific evaluation. Useful as a reference for professionals in any of the areas of speech and language processing.},
+  isbn = {978-0-13-095069-7}
+}
+
+
+@article{hallerDowserGuidedFuzzer2013,
+  title = {Dowser: A Guided Fuzzer to Find Buffer Overflow Vulnerabilities},
+  author = {Haller, Istvan and Slowinska, Asia and Neugschwandtner, Matthias and Bos, Herbert},
+  year = {2013},
+  pages = {49--64},
+  abstract = {Dowser is a 'guided' fuzzer that combines taint tracking, program analysis and symbolic execution to find buffer overflow vulnerabilities buried deep in the program's logic. Intuitively, a piece of code with convoluted pointer arithmetic instructions may be more prone to memory errors than straightforward array accesses. More importantly, the more complex the bugs and the more convoluted the pointer arithmetic, the harder it will be to find using existing techniques like random fuzzing, and static analysis.},
+  file = {/home/juan/Zotero/storage/5ELJRICR/Haller et al. - Dowser a guided fuzzer to ﬁnd buffer overﬂow vuln.pdf},
+  journal = {Proceedings of the 22nd USENIX Security Symposium},
+  language = {en}
+}
+
+@inproceedings{ganeshTaintbasedDirectedWhitebox2009,
+  title = {Taint-Based Directed Whitebox Fuzzing},
+  booktitle = {2009 {{IEEE}} 31st {{International Conference}} on {{Software Engineering}}},
+  author = {Ganesh, Vijay and Leek, Tim and Rinard, Martin},
+  year = {2009},
+  month = may,
+  pages = {474--484},
+  issn = {1558-1225},
+  doi = {10.1109/ICSE.2009.5070546},
+  abstract = {We present a new automated white box fuzzing technique and a tool, BuzzFuzz, that implements this technique. Unlike standard fuzzing techniques, which randomly change parts of the input file with little or no information about the underlying syntactic structure of the file, BuzzFuzz uses dynamic taint tracing to automatically locate regions of original seed input files that influence values used at key program attack points (points where the program may contain an error). BuzzFuzz then automatically generates new fuzzed test input files by fuzzing these identified regions of the original seed input files. Because these new test files typically preserve the underlying syntactic structure of the original seed input files, they tend to make it past the initial input parsing components to exercise code deep within the semantic core of the computation. We have used BuzzFuzz to automatically find errors in two open-source applications: Swfdec (an Adobe Flash player) and MuPDF (a PDF viewer). Our results indicate that our new directed fuzzing technique can effectively expose errors located deep within large programs. Because the directed fuzzing technique uses taint to automatically discover and exploit information about the input file format, it is especially appropriate for testing programs that have complex, highly structured input file formats.},
+  file = {/home/juan/Zotero/storage/FZXLLE8V/Ganesh et al. - 2009 - Taint-based directed whitebox fuzzing.pdf;/home/juan/Zotero/storage/FH4QH674/5070546.html},
+  keywords = {Artificial intelligence,Automatic testing,Character generation,Computer science,Instruments,Laboratories,Law,Legal factors,Libraries,Open source software}
+}
+
+
+@misc{DocumentationNetworkingQEMU,
+  title = {Documentation/{{Networking}} - {{QEMU}}},
+  file = {/home/juan/Zotero/storage/RHES2UHQ/Networking.html},
+  howpublished = {https://wiki.qemu.org/Documentation/Networking}
+}
+
+@misc{krasnyanskyUniversalTUNTAP,
+  title = {Universal {{TUN}}/{{TAP}} Device Driver},
+  author = {Krasnyansky, Maxim},
+  file = {/home/juan/Zotero/storage/5KCIXRK8/tuntap.html},
+  howpublished = {https://www.kernel.org/doc/Documentation/networking/tuntap.txt}
+}

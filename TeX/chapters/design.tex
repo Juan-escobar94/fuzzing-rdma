@@ -1,0 +1,35 @@
+\section{Design}\label{s:design}
+
+Since many state-of-the-art fuzzers do not directly address some of the challenges
+posed by RDMA applications (see Section \ref{s:ibverbs-challenges}), I propose a fuzzer that plays the role
+of a proxy between two machines which comunicate using RDMA. The network architecture
+allows the fuzzer not only to monitor traffic between the machines, but also to modify it.
+Unlike system call based fuzzers, this approach can easily test code paths which require
+fully initialized and connected applications, in the context of RDMA Verbs. % ibverbs.
+
+As the goal of the fuzzer is to trigger bugs related to the RDMA network stack,
+only the modification of headers that are pertinent to it is desirable;
+the Base Transport Header, sitting at layer 4,
+defines fields relevant to RDMA applications (see Table \ref{tab:bthfields}). Fuzzing any other headers such as
+ethernet or IP headers would be detrimental to efficiency, as other parts of the network stack may not be able
+to deliver the packets; the modified packets would
+not even reach the target application. Fuzzing payload contents is also undoubtedly inefficient,
+because it does not concern RDMA device drivers.
+
+It is relevant to mention that even though this design was conceived with
+SoftRoCE at hand, it can be applied to anything that processes Base
+Transport Headers, even real NICs. This is true because processing of
+Base Transport Headers is implemented at the hardware level. %% maybe cite this?
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{proxyfuzzerconcept}
+  \caption[Proxy fuzzer concept]{Basic concept of a Proxy fuzzer, the red arrow denotes fuzzed traffic.}
+  \label{fig:fuzzerconcept}
+\end{figure}
+
+Figure \ref{fig:fuzzerconcept} depicts the conceptual architecture for the Proxy Fuzzer.
+The traffic can be fuzzed in any direction, including both directions simultaneously.
+Nevertheless, as network protocols must conform to an underlying structure and excessive header manipulations usually
+just lead to dropped packets, the conceptual
+design is mainly concerned with fuzzing in one direction, as shown in figure \ref{fig:fuzzerconcept}.
