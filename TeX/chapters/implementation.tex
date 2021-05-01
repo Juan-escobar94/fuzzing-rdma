@@ -6,11 +6,13 @@ network traffic, as proposed in section \ref{s:design}, we can use the combinati
 starts a virtual machine allows us to specify parameters such as:
 \begin{itemize}
   \item The kernel boot image,
-  \item Image files from which we can provide a prepared file system,
+  \item Disk image files from which we can provide a prepared file system, % TODO: which contains the installed modules for RDMA and the latest iproute2 version to enable software rdma devices,
   \item Virtual network interfaces.
 \end{itemize}
 
-In this way, QEMU can create a virtual network device
+\subsection{Setting up the Network}
+
+QEMU can create a virtual network device
 inside the guest environment (e.g. a PCI network interface) and we can specify a backend to the
 guest network interface. This backend is a virtual network interface that interacts with the
 emulated NIC:\@ it puts the packets from the guest into the host and vice-versa\cite{DocumentationNetworkingQEMU}.
@@ -22,30 +24,30 @@ corresponding ioctl() call to register a new interface with the kernel\cite{kras
 Listing \ref{lst:tapifr} shows a snippet demonstrating how to register/open a TAP device.
 
 %% snippet of the open and ioctl call.
-\begin{lstlisting}[caption={Registering/opening a TAP interface}, label={lst:tapifr},  style=CStyle]
+\begin{lstlisting}[caption={Registering/opening a virtual TAP interface}, label={lst:tapifr},  style=CStylespecial]
  #include <linux/if.h>
  #include <linux/if_tun.h>
 
   /* inside register/open device function */
-  struct ifreq interface;
+  struct ifreq interface_req;
   int fd, err;
 
   fd = open("dev/net/tun", O_RDWR);
 
   /* check for errors */
+  /* ... */
 
-  memset(&interface, 0, sizeof(interface));
-  interface.ifr_flags = IFF_TAP;
-  interface.ifr_name = "tap0";
+  memset(&interface_req, 0, sizeof(interface_req));
+  interface_req.ifr_flags = IFF_TAP;
+  interface_req.ifr_name = "tap0";
 
-  err = ioctl(fd, TUNSETIFF, (void *) &interface);
+  err = ioctl(fd, TUNSETIFF, (void *) &interface_req);
 
   /* check for errors */
+  /* ... */
 
   return fd;
 \end{lstlisting}
-
-
 
 Normally, the registered TAP device disappears as soon as the process that created the interface exits, but
 the interface can be made persistent with a further ioctl() call. Persistent interfaces can be opened
@@ -54,64 +56,117 @@ for the first time.
 %This is part of what the ip tuntap command does\footnote{iproute2: https://git.kernel.org/pub/scm/network/iproute2/iproute2.git/ }
 A TAP interface is the type of backend we associate to the VM's network interface. However, a problem arises
 when we trying to open the TAP devices that are associated with the QEMU process: the ioctl() call
-fails and sets the global error variable ERRNO to EBUSY (device or resource busy).
+fails and sets the global error variable ERRNO to EBUSY (device or resource busy). When
+we dig into the kernel sources for the functions that handle registration and attachment for this type of device,
+we see that the operating system returns  this error when the user registers a device without multiqueue support and this device was already
+attached\footnote{Under a recent Linux Kernel source tree, see drivers/net/tun.c: specifically tun\_set\_iff() and tun\_attach() }.
+We are not interested in enabling multiqueue support, as ...
 
+We can connect the TAP device associated with the QEMU process to a virtual bridge, and connect an additional TAP interface to the bridge.
+For each VM, we create then an additional TAP device and a bridge. In this way, we can open the additional tap devices within our fuzzer
+process. Figure \ref{fig:networkdetailed} shows the layout of the network architecture we describe.
 
-
-
-%% With the help of the machine emulator / virtualizer QEMU, ///I can create a pair of
-%% virtual machines running the custom kernel on a x86\_64 architecture.
-%% Using debootstrap, ///one can easily install a Debian system on
-%% the virtual machines, and specify all of the required packages
-%% for ///my test environment, including those necessary to compile and run applications
-%% using the verbs libraries.
-
-%% We///// want to be able to see traffic, % tap interfaces offer a solution
-
-%% By using TUN/TAP interfaces, the fuzzer can read all network traffic that goes
-%% through the TUN/TAP interface inside a user space program. As stated in
-%% the Kernel documentation, these interfaces can be seen as a simple point-to-point
-%% or ethernet device, which send and receive packets to and from a user space program.
-
-%% I///// can connect the network interface cards
-%% inside the virtual machines to a virtual interface visible to the host environment.
-
-%% % briefly explain tap interfaces
-
-%% Creating a TAP interface is possible by opening the `/dev/net/tun` device file.
-%% With the file descriptor resulting from the previous open system call, we can ask the operating system
-%% to create a TAP interface by issuing an ioctl system call, with the name of the interface we want to
-%% register. Once the program ends, the operating system removes this interface, unless another ioctl call
-%% is issued to make this interface persistent. The creation of the interface and the further ioctl call for persistence
-%% is roughly what the ip tuntap command does\footnote{iproute2: https://git.kernel.org/pub/scm/network/iproute2/iproute2.git/ }.
-
-%% % TODO: code snippet for creating such devices
-
-
-%% Unfortunately, we cannot reopen these interfaces in the context of proxy fuzzer process, since the QEMU
-%% process has already opened them; the respective ioctl system call fails and sets the
-%% global ERRNO variable to EBUSY (device or resource busy). To overcome this, we create a pair of
-%% virtual bridges, connect them to the tap interfaces mapped to the ethernet interfaces inside the virtual
-%% machines, and we create additional tap interfaces and also connect them to the bridge.
-
-%% TODO: Picture
-%%
 \begin{figure}[h]
   \centering
   \includegraphics[width=\linewidth]{proxyfuzzernetworkdetailed}
   \caption[Proxy fuzzer network architecture]{Detailed network architecture for the proxy fuzzer}
+  \label{fig:networkdetailed}
 \end{figure}
 
-%% TODO: explain fuzzing loop, which fields not to fuzz, removed crc checks
+Now that we can open the interfaces labeled as tap1 and tap2 in figure \ref{fig:networkdetailed}, we ``connect'' the
+network by forwarding the traffic from tap1 into tap2 inside the fuzzer process, and vice-versa. The fuzzer
+process takes a frame by simply calling read() on the TAP device and forwards it to the other device by calling write().
+Listing \ref{lst:fwdtraffic} shows how the porcess forwards traffic in one direction. The other direction is handled by a
+child process in an analogous manner.
 
-%% TODO: mention other approaches I tried (maybe in discussion)
+\begin{lstlisting}[caption={Forwarding traffic in the proxy fuzzer process}, label={lst:fwdtraffic},  style=CStyle, float, floatplacement=H]
+  /* file descriptors for tap1, tap2 interfaces */
+  int fd_tap1, fd_tap2;
 
-%% TODO: mention the benchmarks used and the program I devised myself to exchange infiniband traffic.
+  /* open the interfaces */
+  /* ... */
 
-%% TODO: mention implementation details, like header dumps for reproducibility, number of fuzzing rounds, fuzz after so many IB packets sent, etc.
+  /* infinite forwarding loop */
+  while (1) {
+    /* take frame from interface tap1 */
+    read_from_tap1 = read(fd_tap1, buffer_tap1, BUFFER_MAX_LEN);
 
-%% TODO: mention or implement AND mention: monitoring, continuous fuzzing.
+    /* do something with the frame */
+    /* ... */
 
-%% TODO:
+    /* put the frame into interface tap2 */
+    write(fd_tap2, buffer_tap1, l);
+  }
+\end{lstlisting}
 
-%% TODO: evaluate other fuzzers
+\subsection{Preparing the Guests' Environment}
+
+We want to prepare a basic Linux system with support for RDMA and SoftRoCE.
+To accomplish this we mount a blank file into our file system and use the tool
+debootstrap to install a debian distribution inside the mount point directory.
+We can specify a list of packages that debootstrap will install into the system,
+so that we can do the following:
+
+\begin{enumerate}
+  \item Build RDMA applications using the libibverbs library,
+  \item Create a virtual rdma device over an existing interface: this requires a recent version of the iproute2 package,
+  \item Build and run performance benchmarks for RDMA applications.
+\end{enumerate}
+
+We also install the modules required for SoftRoCE and RDMA into this file system.
+For simplicity, we took  out the CRC checks inside of the SoftRoCE module. We consider
+this is not too invasive, because we could also achieve the same results by recomputing the checksum values after modifying
+the headers and writing the new value into the header.
+The kernel we use is compiled with the options described in Subsection \ref{ss:fuzzingkernel}.
+
+\subsection{Fuzzing the Traffic}
+
+The Proxy fuzzer parses the frames read and determines wether it carries RDMA traffic, i.e. a Base Transport Header.
+If there is RDMA traffic, the fuzzer mutates a random field of the header (see Table \ref{tab:bthfields}), with the following exceptions:
+
+\begin{itemize}
+  \item Transport Header version, because the SoftRoCE driver enforces the requirement of this field always being equal to 0: if its not, SoftRoCE will drop the packet.
+  \item Destination QP, because when there is no Queue Pair with a matching number, the packet will also be dropped.
+\end{itemize}
+
+(SUBJECT TO CHANGE)
+After fuzzing the Base Transport Header fields, the fuzzer will check wether the OpCode determines the presence of Header Extensions,
+which the fuzzer will try to parse accordingly and modify as well.
+
+The Fuzzer modifies the fields by generating a random byte (ranging from 0x00 to 0xFF) and
+assigns to a random header field the result of such header field XOR'd with the random byte. This is done a random number
+of times, with a limit of 3 times per packet. It can occur, that the fuzzer leaves the packet intact.
+
+After fuzzing a packet, the Fuzzer will write the resulting header into a log file for error reproducibility.
+
+
+\RestyleAlgo{boxruled}
+\SetAlgoVlined
+\begin{algorithm}[t]
+  \caption{Algorithm for enumerating core triads}
+  \label{alg:triads}
+  \LinesNumberedHidden
+  \DontPrintSemicolon
+  \KwIn{an unsigned integer $n$}
+  \KwOut{a list of all core triads with at most $n$ vertices}
+  \BlankLine
+  \tcp{Finding a list of arms}
+  $armlist \longleftarrow [\;]$\;
+  \ForEach{arm $a$ with $\length(a) \leq n$}{
+    \If{$\ACR_{a}(a)$ does not derive $id$}
+    {Put $a$ in armlist\;}}
+  \BlankLine
+  \tcp{Assembling the arms to core triads}
+  $triadlist \longleftarrow [\;]$\;
+  \ForAll{$p_{1},p_{2}$ in armlist with combined at most $n$ vertices}{
+    Let \(\theta = p_{1},p_{2}\) be a partial triad\;
+      \If{$\ACR_{\theta}(\theta)$ does not derive $id$}
+      {Drop $\theta$ and cache the two arms\;}}
+  \ForAll{$p_{1},p_{2},p_{3}$ in armlist with combined at most $n$ vertices}{
+    Let \(\mathbb{T} = p_{1},p_{2},p_{3}\) be a triad\;
+      \If{$\mathbb{T}$ contains a pair of cached arms}
+      {Drop $\mathbb{T}$ and continue\;}
+      \If{$\AC_{\mathbb{T}}(\mathbb{T})$ derives $id$}
+      {Put $\mathbb{T}$ in triadlist\;}}
+  \Return{triadlist}
+\end{algorithm}
