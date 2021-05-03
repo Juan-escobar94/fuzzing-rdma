@@ -102,10 +102,67 @@ Fuzzers can be categorized into 3 main types:
 
 \begin{itemize}
     \item Blackbox Fuzzer: No knowledge of target program internals, the testing process is limited to observing the target's input and output behaviour. Consequently, they have no means of measuring coverage and can only provide input to the target.
-    \item Whitebox Fuzzer: These fuzzers can take advantage of the source code of the target application, not allowing them better insights into how the system works, but also to benefit from coverage measurements.
+    \item Whitebox Fuzzer: These fuzzers can take advantage of the source code of the target application, not only allowing them better insights into how the system works, but also to benefit from code coverage measurements.
       %% these fuzzers rely on the knowledge of the source code of the target application, making them more efficient ( TODO: symbolic execution tools, model checkers that improve coverage, computed coverage guides the generator)
     \item Graybox Fuzzer: This applies to fuzzers that do not fall into any of the previous categories. Source code of the target may not be available, but other means of inspection such as reverse engineering, static analysis, or executing inside a debugger are the usual workhorses of graybox fuzzers\cite{mcnallyFuzzingStateArt2012}.
 \end{itemize}
+
+%% Test case generation based on coverage is described by the algorithm in Algorithm~\ref{alg:genalg}.
+
+%% \RestyleAlgo{boxruled}
+%% \SetAlgoVlined
+%% \begin{algorithm}[h!]
+%%   \caption{Algorithm for Coverage-Based Data Generation}\label{alg:genalg}\LinesNumberedHidden\DontPrintSemicolon
+%%   \KwIn{A set of Inputs $I$}
+%%   \KwOut{An Input Corpus $C$, such that $I \subseteq C$}
+%%   $C \gets I$\;
+%%   $coverageOld \gets 0$\;
+%%   \While{true}{
+%%     $newInput \gets generateInput()$\;
+%%     $coverageNew \gets runTargetProgram(newInput)$\;
+
+%%     \If{$coverageOld < coverageNew$} {
+%%       $C \gets C \cup \{newInput\} $
+%%     }
+%%     $coverageOld \gets coverageNew$
+%%   }
+%%   \Return{C}
+%% \end{algorithm}
+
+%% %% TODO: highlight importance with an if cascade program.
+%% To highlight the importance of using coverage information to generate new test inputs, consider the program in
+%% Listing~\ref{lst:ifcascade}. Reaching the potential out-of-bounds access would require a blind fuzzer (i.e. without code coverage
+%% information) to go over ${\frac{1}{2}}^{40}$test cases\footnote{${\frac{1}{256}}^{5}$ test cases, as the char type is 8 bits wide.}.
+
+%% \begin{lstlisting}[caption={If-Cascade Program}, label={lst:ifcascade},  style=CStyle, float, floatplacement=h!]
+%% char input[6];
+
+%% void read_input() {
+%%   fgets(input, 6, stdin);
+
+%%   if (input[0] == 'o') {
+%%     if (input[1] == 's') {
+%%       if (input[2] == 't') {
+%%         if (input[3] == 'u') {
+%%           if (input[4] == 'd') {
+%%             crash_program();
+%%           }
+%%         }
+%%       }
+%%     }
+%%   }
+%%   operate_normally();
+%% }
+
+%% void crash_program() {
+%%   int index = random() % 10;
+%%   /* potential out-of-bounds access */
+%%   input[index] = 'S';
+%% }
+
+
+%% \end{lstlisting}
+
 
 
 Along with coverage, depth is also an important metric when evaluating fuzzing efficiency. A program
@@ -143,22 +200,69 @@ These two main categories can be further described by the techniques used to gen
     sequence to reply responses in order to test certain functionality.
 \end{itemize}
 
-\paragraph{Coverage guided fuzzing}
+\paragraph{Coverage guided fuzzing:}
 
-Generation or Mutation based on coverage is described by the algorithm in listing~\ref{lst:genalg}.
+Test case generation based on code coverage is an important aspect for efficient Fuzzers.
+The Fuzzer generates a new input based on the input corpus it already has. After
+running the target program with this new input, it will collect the code coverage
+information and compare it to the previous coverage. If the code coverage is higher after
+running the target with this newly generated input, the Fuzzer adds the input to its corpus of inputs.
+Algorithm~\ref{alg:genalg} describes this procedure.
 
-%% maybe flow diagram replacing this listing and also highlight importance with an if cascade program.
-%% mention afl creating valid jpegs out of nothing
+\RestyleAlgo{boxruled}
+\SetAlgoVlined
+\begin{algorithm}[h]
+  \caption{Algorithm for Coverage-Based Data Generation}\label{alg:genalg}\LinesNumberedHidden\DontPrintSemicolon
+  \KwIn{A set of Inputs $I$}
+  \KwOut{An Input Corpus $C$, such that $I \subseteq C$}
+  $C \gets I$\;
+  $coverageOld \gets 0$\;
+  \While{true}{
+    $newInput \gets generateInput()$\;
+    $coverageNew \gets runTargetProgram(newInput)$\;
 
+    \If{$coverageOld < coverageNew$} {
+      $C \gets C \cup \{newInput\} $
+    }
+    $coverageOld \gets coverageNew$
+  }
+  \Return{C}
+\end{algorithm}
 
-\begin{lstlisting}[caption={Coverage based data generation}, label={lst:genalg}, language=python]
-    # First step: acquire initial corpus
-        while(True):
-            MutateCorpus()
-            Run(newInputs)
-            if (coverage > coverageOld)  Corpus.add(newInput)
+%% TODO: highlight importance with an if cascade program.
+To highlight the importance of using code coverage information to generate new test inputs, consider the program in
+Listing~\ref{lst:ifcascade}. Reaching the potential out-of-bounds access would require a blind fuzzer (i.e. without code coverage
+information) to go over ${\frac{1}{2}}^{40}$test cases\footnote{${\frac{1}{256}}^{5}$ test cases, as the char type is 8 bits wide.}.
 
+\begin{lstlisting}[caption={If-Cascade Program}, label={lst:ifcascade},  style=CStyle, float, floatplacement=H]
+char input[6];
+
+void read_input() {
+  fgets(input, 6, stdin);
+
+  if (input[0] == 'o') {
+    if (input[1] == 's') {
+      if (input[2] == 't') {
+        if (input[3] == 'u') {
+          if (input[4] == 'd') {
+            crash_program();
+          }
+        }
+      }
+    }
+  }
+  operate_normally();
+}
+
+void crash_program() {
+  int index = random() % 10;
+  /* potential out-of-bounds access */
+  input[index] = 'S';
+}
 \end{lstlisting}
+
+If a Fuzzer leverages code coverage information to generate new inputs, the number of input cases it needs to generate
+to discover this deeply nested crashes is substantially reduced. % afl jpeg out of thin air
 
 
 \paragraph{Delivery Mechanisms}

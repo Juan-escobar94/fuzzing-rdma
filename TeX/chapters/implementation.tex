@@ -129,44 +129,54 @@ If there is RDMA traffic, the fuzzer mutates a random field of the header (see T
   \item Destination QP, because when there is no Queue Pair with a matching number, the packet will also be dropped.
 \end{itemize}
 
-(SUBJECT TO CHANGE)
 After fuzzing the Base Transport Header fields, the fuzzer will check wether the OpCode determines the presence of Header Extensions,
 which the fuzzer will try to parse accordingly and modify as well.
 
 The Fuzzer modifies the fields by generating a random byte (ranging from 0x00 to 0xFF) and
 assigns to a random header field the result of such header field XOR'd with the random byte. This is done a random number
-of times, with a limit of 3 times per packet. It can occur, that the fuzzer leaves the packet intact.
-
-After fuzzing a packet, the Fuzzer will write the resulting header into a log file for error reproducibility.
-
+of rounds, with a limit of 3 rounds per packet. It can occur that the fuzzer leaves the packet intact if the number of rounds is zero.
+Algorithm \ref{alg:fuzz} outlines this procedure.
 
 \RestyleAlgo{boxruled}
 \SetAlgoVlined
 \begin{algorithm}[t]
-  \caption{Algorithm for enumerating core triads}
-  \label{alg:triads}
+  \caption{A Simple Algorithm for Fuzzing RDMA Headers}
+  \label{alg:fuzz}
   \LinesNumberedHidden
   \DontPrintSemicolon
-  \KwIn{an unsigned integer $n$}
-  \KwOut{a list of all core triads with at most $n$ vertices}
-  \BlankLine
-  \tcp{Finding a list of arms}
-  $armlist \longleftarrow [\;]$\;
-  \ForEach{arm $a$ with $\length(a) \leq n$}{
-    \If{$\ACR_{a}(a)$ does not derive $id$}
-    {Put $a$ in armlist\;}}
-  \BlankLine
-  \tcp{Assembling the arms to core triads}
-  $triadlist \longleftarrow [\;]$\;
-  \ForAll{$p_{1},p_{2}$ in armlist with combined at most $n$ vertices}{
-    Let \(\theta = p_{1},p_{2}\) be a partial triad\;
-      \If{$\ACR_{\theta}(\theta)$ does not derive $id$}
-      {Drop $\theta$ and cache the two arms\;}}
-  \ForAll{$p_{1},p_{2},p_{3}$ in armlist with combined at most $n$ vertices}{
-    Let \(\mathbb{T} = p_{1},p_{2},p_{3}\) be a triad\;
-      \If{$\mathbb{T}$ contains a pair of cached arms}
-      {Drop $\mathbb{T}$ and continue\;}
-      \If{$\AC_{\mathbb{T}}(\mathbb{T})$ derives $id$}
-      {Put $\mathbb{T}$ in triadlist\;}}
-  \Return{triadlist}
+  \KwIn{An Array of bytes $Packet$, a number of rounds $n \leq 3$}
+  \KwOut{A modified Array of bytes $Packet$}
+  $MaxHeaderOffset \gets 12$\;
+  $MaxByteValue \gets 255$\;
+
+  \For{$i \gets 1$ \textbf{to} $n$}{
+      $randomByte \gets Random()  \; \% \;  (MaxByteValue + 1)$
+      $randomOffset \gets Random() \; \% \; MaxHeaderOffset $
+      $Packet[randomOffset] \gets Packet[randomOffset] \oplus randomByte$
+  }
+  $OpCodeOffset \gets 0$\;
+
+  $OpCode \gets Packet[OpCodeOffset]$\;
+  $OpCodeWithHeaderExtensions1 \gets 0$\;
+  $OpCodeWithHeaderExtensions2 \gets 1$\;
+  \Switch{OpCode}{
+    \Case{OpCodeWithHeaderExtensions1}{
+      $Packet \gets FuzzHeaderExtensions(Packet, OpCode)$
+    }
+
+    \Case{OpCodeWithHeaderExtensions2}{
+      $Packet \gets FuzzHeaderExtensions(Packet, OpCode)$
+    }
+    /* More cases for OpCodes with header extensions */\;
+    /* ... */\;
+    \Other{
+      nothing
+    }
+  }
+
+  \Return{Packet}
 \end{algorithm}
+
+After fuzzing a packet, the Fuzzer will write the resulting header into a log file for error reproducibility.
+
+TODO
