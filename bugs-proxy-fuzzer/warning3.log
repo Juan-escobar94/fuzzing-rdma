@@ -1,0 +1,31 @@
+ [   68.170548] ------------[ cut here ]------------
+│[   68.171149] WARNING: CPU: 1 PID: 71 at drivers/infiniband/sw/rxe/rxe_comp.c:762 rxe_comple]
+│[   68.171149] Modules linked in: rdma_rxe ip6_udp_tunnel udp_tunnel ib_uverbs
+│[   68.171149] CPU: 1 PID: 71 Comm: kworker/u4:3 Not tainted 5.7.0+ #2
+│[   68.171149] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS ArchLinux 1.14.0-14
+│[   68.171149] Workqueue: qp#17:comp rxe_do_task [rdma_rxe]
+│[   68.171149] RIP: 0010:rxe_completer+0x1fef/0x2f70 [rdma_rxe]
+│[   68.171149] Code: e9 59 e2 ff ff e8 e1 a4 28 c1 8b 54 24 50 b8 0e 00 00 00 41 39 d5 41 bd f
+│[   68.171149] RSP: 0018:ffff88811746fc40 EFLAGS: 00010293
+│[   68.171149] RAX: 0000000000000000 RBX: dffffc0000000000 RCX: ffffffffc02e42cf
+│[   68.171149] RDX: ffff888118986a00 RSI: 0000000000206f33 RDI: ffffc900004df210
+│[   68.171149] RBP: ffff888112b62168 R08: ffff888113e70de0 R09: 0000000000000003
+│[   68.171149] R10: ffffed1022e8df76 R11: 0000000000000001 R12: 0000000000000000
+│[   68.171149] R13: 000000000000000c R14: ffffc900004df180 R15: ffff888113e70970
+│[   68.171149] FS:  0000000000000000(0000) GS:ffff88811b300000(0000) knlGS:0000000000000000
+│[   68.171149] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+│[   68.171149] CR2: 00007fcd47189000 CR3: 00000001146b6000 CR4: 00000000000006e0
+│[   68.171149] Call Trace:
+│[   68.171149]  ? __switch_to+0x5cd/0xde0
+│[   68.171149]  ? rxe_comp_queue_pkt+0x30/0x30 [rdma_rxe]
+│[   68.171149]  ? __schedule+0x72a/0x1880
+│[   68.171149]  ? pwq_activate_delayed_work+0x237/0x4e0
+│[   68.171149]  rxe_do_task+0x69/0xe0 [rdma_rxe]
+│[   68.171149]  ? pwq_dec_nr_in_flight+0x12c/0x2d0
+│[   68.171149]  process_one_work+0x7f9/0x1130
+│[   68.171149]  worker_thread+0x596/0x1280
+│[   68.171149]  ? rescuer_thread+0x1000/0x1000
+│[   68.171149]  kthread+0x30f/0x3d0
+│[   68.171149]  ? kthread_create_worker_on_cpu+0xf0/0xf0
+│[   68.171149]  ret_from_fork+0x22/0x30
+│[   68.171149] ---[ end trace d9bff9297e6a01cb ]---

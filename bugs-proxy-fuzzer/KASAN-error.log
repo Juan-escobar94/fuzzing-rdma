@@ -1,0 +1,143 @@
+Running ib_atomic_bw (happens as well without the fuzzer)
+
+ #bytes     #iterations    BW peak[MB/sec]    BW average[MB/sec]   MsgRate[Mpps]               │Makefile        config.h.in    ib_read_lat    raw_ethernet_bw
+[   92.688414] ==================================================================              │Makefile.am     config.h.in~   ib_send_bw     raw_ethernet_fs_rate
+[   92.689277] BUG: KASAN: slab-out-of-bounds in __ip_options_echo+0x7e4/0xff0                 │Makefile.in     config.log     ib_send_lat    raw_ethernet_lat
+[   92.689766] Read of size 255 at addr ffff888118588d2d by task kworker/u4:0/7                │README          config.status  ib_write_bw    run_perftest_loopback
+[   92.689766]                                                                                 │README_sparc    configure      ib_write_lat   run_perftest_multi_devices
+[   92.689766] CPU: 0 PID: 7 Comm: kworker/u4:0 Not tainted 5.7.0+ #2                          │aclocal.m4      configure.ac   libperftest.a  runme
+[   92.689766] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS ArchLinux 1.14.0-1 4│autogen.sh      debian         libtool        src
+[   92.689766] Workqueue: qp#17:resp rxe_do_task [rdma_rxe]                                    │autom4te.cache  ib_atomic_bw   m4             stamp-h1
+[   92.689766] Call Trace:                                                                     │config          ib_atomic_lat  perftest.spec
+[   92.689766]  dump_stack+0x9c/0xde                                                           │root@rdma-server:~/perftest# ./ib_atomic_bw -b
+[   92.689766]  ? __ip_options_echo+0x7e4/0xff0                                                │---------------------------------------------------------------------------------------
+[   92.689766]  print_address_description.constprop.0+0x1a/0x210                               │Device not recognized to implement inline feature. Disabling it
+[   92.689766]  ? _raw_spin_lock_irqsave+0x7b/0xd0                                             │
+[   92.689766]  ? _raw_write_lock_irqsave+0xd0/0xd0                                            │************************************
+[   92.689766]  ? rxe_do_task+0x69/0xe0 [rdma_rxe]                                             │* Waiting for client to connect... *
+[   92.689766]  ? __ip_options_echo+0x7e4/0xff0                                                │************************************
+[   92.689766]  kasan_report.cold+0x37/0x7c                                                    │---------------------------------------------------------------------------------------
+[   92.689766]  ? __ip_options_echo+0x7e4/0xff0                                                │                    Atomic FETCH_AND_ADD Bidirectional BW Test
+[   92.689766]  check_memory_region+0xf9/0x1e0                                                 │ Dual-port       : OFF          Device         : rxe0
+[   92.689766]  memcpy+0x20/0x60                                                               │ Number of qps   : 1            Transport type : IB
+[   92.689766]  __ip_options_echo+0x7e4/0xff0                                                  │ Connection type : RC           Using SRQ      : OFF
+[   92.689766]  __icmp_send+0x8c8/0x1030                                                       │ PCIe relax order: ON
+[   92.689766]  ? icmp_route_lookup.constprop.0+0xa00/0xa00                                    │ ibv_wr* API     : OFF
+[   92.689766]  ? rxe_find_route+0x128/0xd10 [rdma_rxe]                                        │ TX depth        : 128
+[   92.689766]  ? ipt_do_table+0xae2/0x10d0                                                    │ CQ Moderation   : 100
+[   92.689766]  ? ipt_do_table+0xae2/0x10d0                                                    │ Mtu             : 1024[B]
+[   92.689766]  ? icmp_checkentry+0x90/0x90                                                    │ Link type       : Ethernet
+[   92.689766]  ip_fragment.constprop.0+0x1b2/0x200                                            │ GID index       : 1
+[   92.689766]  __ip_finish_output.part.0+0x485/0x690                                          │ Outstand reads  : 128
+[   92.689766]  __ip_finish_output+0xec/0x120                                                  │ rdma_cm QPs     : OFF
+[   92.689766]  ip_output+0x1c0/0x350                                                          │ Data ex. method : Ethernet
+[   92.689766]  ? ip_mc_output+0x870/0x870                                                     │---------------------------------------------------------------------------------------
+[   92.689766]  ? ip_forward_options.cold+0x2c/0x2c                                            │ local address: LID 0000 QPN 0x0011 PSN 0xbb987d
+[   92.689766]  ip_local_out+0x7f/0xc0                                                         │ GID: 00:00:00:00:00:00:00:00:00:00:255:255:172:00:00:16
+[   92.689766]  rxe_send+0x30e/0x420 [rdma_rxe]                                                │ remote address: LID 0000 QPN 0x0011 PSN 0xfb2b88
+[   92.689766]  rxe_responder+0x5831/0x75e0 [rdma_rxe]                                         │ GID: 00:00:00:00:00:00:00:00:00:00:255:255:172:00:00:15
+[   92.689766]  ? rxe_resp_queue_pkt+0x30/0x30 [rdma_rxe]                                      │---------------------------------------------------------------------------------------
+[   92.689766]  ? update_load_avg+0x120/0x17c0                                                 │ #bytes     #iterations    BW peak[MB/sec]    BW average[MB/sec]   MsgRate[Mpps]
+[   92.689766]  ? update_load_avg+0x120/0x17c0                                                 │[   99.595020] rdma_rxe: bad pkey = 0x24ff
+[   92.689766]  ? pick_next_entity+0x27e/0x580                                                 │[   99.600827] rdma_rxe: bad pkey = 0xe6ff
+[   92.689766]  ? __switch_to+0x5cd/0xde0                                                      │[   99.602090] rdma_rxe: bad pkey = 0xff1f
+[   92.689766]  ? __schedule+0x72a/0x1880                                                      │[   99.603375] rdma_rxe: bad pkey = 0xff60
+[   92.689766]  ? pwq_activate_delayed_work+0x237/0x4e0                                        │[   99.604850] rdma_rxe: bad pkey = 0x93ff
+[   92.689766]  rxe_do_task+0x69/0xe0 [rdma_rxe]                                               │[   99.606152] rdma_rxe: bad pkey = 0xff75
+[   92.689766]  ? pwq_dec_nr_in_flight+0x12c/0x2d0                                             │[   99.607400] rdma_rxe: bad pkey = 0x42ff
+[   92.689766]  process_one_work+0x7f9/0x1130                                                  │[   99.608701] rdma_rxe: bad pkey = 0xffb8
+[   92.689766]  worker_thread+0x596/0x1280                                                     │[   99.609999] rdma_rxe: bad pkey = 0xff10
+[   92.689766]  ? rescuer_thread+0x1000/0x1000                                                 │[   99.611268] rdma_rxe: bad pkey = 0xf2ff
+[   92.689766]  kthread+0x30f/0x3d0                        
+[   92.689766]  ? kthread_create_worker_on_cpu+0xf0/0xf0                               [43/798]│COPYING         config.h       ib_read_bw     raw_ethernet_burst_lat
+[   92.689766]  ret_from_fork+0x22/0x30                                                        │Makefile        config.h.in    ib_read_lat    raw_ethernet_bw
+[   92.689766]                                                                                 │Makefile.am     config.h.in~   ib_send_bw     raw_ethernet_fs_rate
+[   92.689766] Allocated by task 7:                                                            │Makefile.in     config.log     ib_send_lat    raw_ethernet_lat
+[   92.689766]  save_stack+0x1b/0x40                                                           │README          config.status  ib_write_bw    run_perftest_loopback
+[   92.689766]  __kasan_kmalloc.constprop.0+0xc2/0xd0                                          │README_sparc    configure      ib_write_lat   run_perftest_multi_devices
+[   92.689766]  __kmalloc_node_track_caller+0x101/0x2a0                                        │aclocal.m4      configure.ac   libperftest.a  runme
+[   92.689766]  __alloc_skb+0x99/0x560                                                         │autogen.sh      debian         libtool        src
+[   92.689766]  rxe_init_packet+0x175/0x500 [rdma_rxe]                                         │autom4te.cache  ib_atomic_bw   m4             stamp-h1
+[   92.689766]  prepare_ack_packet+0x134/0xb30 [rdma_rxe]                                      │config          ib_atomic_lat  perftest.spec
+[   92.689766]  rxe_responder+0x556f/0x75e0 [rdma_rxe]                                         │root@rdma-server:~/perftest# ./ib_atomic_bw -b
+[   92.689766]  rxe_do_task+0x69/0xe0 [rdma_rxe]                                               │---------------------------------------------------------------------------------------
+[   92.689766]  process_one_work+0x7f9/0x1130                                                  │Device not recognized to implement inline feature. Disabling it
+[   92.689766]  worker_thread+0x596/0x1280                                                     │
+[   92.689766]  kthread+0x30f/0x3d0                                                            │************************************
+[   92.689766]  ret_from_fork+0x22/0x30                                                        │* Waiting for client to connect... *
+[   92.689766]                                                                                 │************************************
+[   92.689766] Freed by task 226:                                                              │---------------------------------------------------------------------------------------
+[   92.689766]  save_stack+0x1b/0x40                                                           │                    Atomic FETCH_AND_ADD Bidirectional BW Test
+[   92.689766]  __kasan_slab_free+0x12d/0x170                                                  │ Dual-port       : OFF          Device         : rxe0
+[   92.689766]  kfree+0x8f/0x220                                                               │ Number of qps   : 1            Transport type : IB
+[   92.689766]  skb_release_data+0x4ba/0x700                                                   │ Connection type : RC           Using SRQ      : OFF
+[   92.689766]  consume_skb+0xc3/0x260                                                         │ PCIe relax order: ON
+[   92.689766]  skb_free_datagram+0x16/0xe0                                                    │ ibv_wr* API     : OFF
+[   92.689766]  netlink_recvmsg+0x505/0xd10                                                    │ TX depth        : 128
+[   92.689766]  sock_recvmsg+0x13b/0x180                                                       │ CQ Moderation   : 100
+[   92.689766]  __sys_recvfrom+0x198/0x2b0                                                     │ Mtu             : 1024[B]
+[   92.689766]  __x64_sys_recvfrom+0xdd/0x1b0                                                  │ Link type       : Ethernet
+[   92.689766]  do_syscall_64+0x9a/0x160                                                       │ GID index       : 1
+[   92.689766]  entry_SYSCALL_64_after_hwframe+0x44/0xa9                                       │ Outstand reads  : 128
+[   92.689766]                                                                                 │ rdma_cm QPs     : OFF
+[   92.689766] The buggy address belongs to the object at ffff888118588c00                     │ Data ex. method : Ethernet
+[   92.689766]  which belongs to the cache kmalloc-512 of size 512                             │---------------------------------------------------------------------------------------
+[   92.689766] The buggy address is located 301 bytes inside of                                │ local address: LID 0000 QPN 0x0011 PSN 0xbb987d
+[   92.689766]  512-byte region [ffff888118588c00, ffff888118588e00)                           │ GID: 00:00:00:00:00:00:00:00:00:00:255:255:172:00:00:16
+[   92.689766] The buggy address belongs to the page:                                          │ remote address: LID 0000 QPN 0x0011 PSN 0xfb2b88
+[   92.689766] page:ffffea0004616200 refcount:1 mapcount:0 mapping:0000000000000000 index:0x0 0│ GID: 00:00:00:00:00:00:00:00:00:00:255:255:172:00:00:15
+[   92.689766] flags: 0x200000000010200(slab|head)                                             │---------------------------------------------------------------------------------------
+[   92.689766] raw: 0200000000010200 dead000000000100 dead000000000122 ffff88811a801280        │ #bytes     #iterations    BW peak[MB/sec]    BW average[MB/sec]   MsgRate[Mpps]
+[   92.689766] raw: 0000000000000000 0000000080100010 00000001ffffffff 0000000000000000        │[   99.595020] rdma_rxe: bad pkey = 0x24ff
+[   92.689766] page dumped because: kasan: bad access detected                                 │[   99.600827] rdma_rxe: bad pkey = 0xe6ff
+[   92.689766]                                                                                 │[   99.602090] rdma_rxe: bad pkey = 0xff1f
+[   92.689766] Memory state around the buggy address:                                          │[   99.603375] rdma_rxe: bad pkey = 0xff60
+[   92.689766]  ffff888118588d00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00              │[   99.604850] rdma_rxe: bad pkey = 0x93ff
+[   92.689766]  ffff888118588d80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00              │[   99.606152] rdma_rxe: bad pkey = 0xff75
+[   92.689766] >ffff888118588e00: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc              │[   99.607400] rdma_rxe: bad pkey = 0x42ff
+[   92.689766]                    ^                                                            │[   99.608701] rdma_rxe: bad pkey = 0xffb8
+[   92.689766]  ffff888118588e80: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc              │[   99.609999] rdma_rxe: bad pkey = 0xff10
+[   92.689766]  ffff888118588f00: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc              │[   99.611268] rdma_rxe: bad pkey = 0xf2ff
+[   92.689766] ==================================================================  
+[   92.689766] Disabling lock debugging due to kernel taint                                    │autogen.sh      debian         libtool        src
+[   92.758519] rdma_rxe: Failed sending ack                                                    │autom4te.cache  ib_atomic_bw   m4             stamp-h1
+[   92.759168] rdma_rxe: Failed sending ack                                                    │config          ib_atomic_lat  perftest.spec
+[   92.759872] Kernel panic - not syncing: stack-protector: Kernel stack is corrupted in: __ic0│root@rdma-server:~/perftest# ./ib_atomic_bw -b
+[   92.760774] CPU: 0 PID: 7 Comm: kworker/u4:0 Tainted: G    B             5.7.0+ #2          │---------------------------------------------------------------------------------------
+[   92.760774] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS ArchLinux 1.14.0-1 4│Device not recognized to implement inline feature. Disabling it
+[   92.760774] Workqueue: qp#17:resp rxe_do_task [rdma_rxe]                                    │
+[   92.760774] Call Trace:                                                                     │************************************
+[   92.760774]  dump_stack+0x9c/0xde                                                           │* Waiting for client to connect... *
+[   92.760774]  panic+0x24b/0x58c                                                              │************************************
+[   92.760774]  ? __warn_printk+0xf3/0xf3                                                      │---------------------------------------------------------------------------------------
+[   92.760774]  ? ip_push_pending_frames+0x163/0x1a0                                           │                    Atomic FETCH_AND_ADD Bidirectional BW Test
+[   92.760774]  ? __icmp_send+0xe9a/0x1030                                                     │ Dual-port       : OFF          Device         : rxe0
+[   92.760774]  ? __stack_chk_fail+0x6/0x20                                                    │ Number of qps   : 1            Transport type : IB
+[   92.760774]  ? __icmp_send+0xe9a/0x1030                                                     │ Connection type : RC           Using SRQ      : OFF
+[   92.760774]  __stack_chk_fail+0x1f/0x20                                                     │ PCIe relax order: ON
+[   92.760774]  __icmp_send+0xe9a/0x1030                                                       │ ibv_wr* API     : OFF
+[   92.760774]  ? icmp_route_lookup.constprop.0+0xa00/0xa00                                    │ TX depth        : 128
+[   92.760774]  ? rxe_find_route+0x128/0xd10 [rdma_rxe]                                        │ CQ Moderation   : 100
+[   92.760774]  ? ip_output+0x1c0/0x350                                                        │ Mtu             : 1024[B]
+[   92.760774]  ? ip_mc_output+0x870/0x870                                                     │ Link type       : Ethernet
+[   92.760774]  ? ip_forward_options.cold+0x2c/0x2c                                            │ GID index       : 1
+[   92.760774]  ? ip_local_out+0x7f/0xc0                                                       │ Outstand reads  : 128
+[   92.760774]  ? rxe_send+0x30e/0x420 [rdma_rxe]                                              │ rdma_cm QPs     : OFF
+[   92.760774]  ? rxe_responder+0x5831/0x75e0 [rdma_rxe]                                       │ Data ex. method : Ethernet
+[   92.760774]  ? rxe_resp_queue_pkt+0x30/0x30 [rdma_rxe]                                      │---------------------------------------------------------------------------------------
+[   92.760774]  ? update_load_avg+0x120/0x17c0                                                 │ local address: LID 0000 QPN 0x0011 PSN 0xbb987d
+[   92.760774]  ? update_load_avg+0x120/0x17c0                                                 │ GID: 00:00:00:00:00:00:00:00:00:00:255:255:172:00:00:16
+[   92.760774]  ? pick_next_entity+0x27e/0x580                                                 │ remote address: LID 0000 QPN 0x0011 PSN 0xfb2b88
+[   92.760774]  ? __switch_to+0x5cd/0xde0                                                      │ GID: 00:00:00:00:00:00:00:00:00:00:255:255:172:00:00:15
+[   92.760774]  ? __schedule+0x72a/0x1880                                                      │---------------------------------------------------------------------------------------
+[   92.760774]  ? pwq_activate_delayed_work+0x237/0x4e0                                        │ #bytes     #iterations    BW peak[MB/sec]    BW average[MB/sec]   MsgRate[Mpps]
+[   92.760774]  ? rxe_do_task+0x69/0xe0 [rdma_rxe]                                             │[   99.595020] rdma_rxe: bad pkey = 0x24ff
+[   92.760774]  ? pwq_dec_nr_in_flight+0x12c/0x2d0                                             │[   99.600827] rdma_rxe: bad pkey = 0xe6ff
+[   92.782306]  ? process_one_work+0x7f9/0x1130                                                │[   99.602090] rdma_rxe: bad pkey = 0xff1f
+[   92.782306]  ? worker_thread+0x596/0x1280                                                   │[   99.603375] rdma_rxe: bad pkey = 0xff60
+[   92.782306]  ? rescuer_thread+0x1000/0x1000                                                 │[   99.604850] rdma_rxe: bad pkey = 0x93ff
+[   92.782306]  ? kthread+0x30f/0x3d0                                                          │[   99.606152] rdma_rxe: bad pkey = 0xff75
+[   92.782306]  ? kthread_create_worker_on_cpu+0xf0/0xf0                                       │[   99.607400] rdma_rxe: bad pkey = 0x42ff
+[   92.782306]  ? ret_from_fork+0x22/0x30                                                      │[   99.608701] rdma_rxe: bad pkey = 0xffb8
+[   92.782306] Kernel Offset: 0x37400000 from 0xffffffff81000000 (relocation range: 0xffffffff)│[   99.609999] rdma_rxe: bad pkey = 0xff10
+[   92.782306] ---[ end Kernel panic - not syncing: stack-protector: Kernel stack is corrupted-

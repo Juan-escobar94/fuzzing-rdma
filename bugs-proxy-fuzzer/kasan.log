@@ -1,0 +1,78 @@
+[  388.361300] general protection fault, probably for non-canonical address 0xdffffc000000000I
+│[  388.361567] KASAN: null-ptr-deref in range [0x0000000000000010-0x0000000000000017]         
+│[  388.361567] CPU: 0 PID: 65 Comm: kworker/u4:1 Tainted: G        W         5.7.0+ #2        
+│[  388.361567] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS ArchLinux 1.14.0-14
+│[  388.361567] Workqueue: qp#17:resp rxe_do_task [rdma_rxe]
+│[  388.361567] RIP: 0010:copy_data+0x57/0x600 [rdma_rxe]
+│[  388.361567] Code: 5a 91 d1 85 db 0f 84 65 02 00 00 e8 33 5a 91 d1 49 8d 4f 04 48 b8 00 00 3
+│[  388.361567] RSP: 0018:ffff888118a07a98 EFLAGS: 00010213
+│[  388.361567] RAX: dffffc0000000000 RBX: 000000000000000c RCX: 0000000000000014
+│[  388.361567] RDX: 0000000000000002 RSI: 0000000000000001 RDI: ffff8881102aba00
+│[  388.361567] RBP: ffff88811493b8a0 R08: 000000000000000c R09: 0000000000000000
+│[  388.361567] R10: ffff888108e9c555 R11: ffff88811493bad8 R12: ffff8881102aba00
+│[  388.361567] R13: ffff88811493b99c R14: dffffc0000000000 R15: 0000000000000010
+│[  388.361567] FS:  0000000000000000(0000) GS:ffff88811b200000(0000) knlGS:0000000000000000
+│[  388.361567] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+│[  388.361567] CR2: 0000000001f9ab08 CR3: 0000000111e7a000 CR4: 00000000000006f0
+│[  388.361567] Call Trace:
+│[  388.361567]  ? _raw_spin_lock_irqsave+0x7b/0xd0
+│[  388.361567]  rxe_responder+0x210c/0x75e0 [rdma_rxe]
+│[  388.361567]  ? __mod_timer+0x57d/0xd20
+│[  388.361567]  ? _raw_write_lock_irqsave+0xd0/0xd0
+│[  388.361567]  ? rxe_resp_queue_pkt+0x30/0x30 [rdma_rxe]
+│[  388.361567]  ? pvclock_clocksource_read+0x2b8/0x510
+│[  388.361567]  ? update_load_avg+0x120/0x17c0
+│[  388.361567]  ? update_curr+0x1fe/0x550
+│[  388.361567]  ? set_next_entity+0x234/0x6d0
+│[  388.361567]  ? __switch_to+0x5cd/0xde0
+│[  388.361567]  rxe_do_task+0x69/0xe0 [rdma_rxe]
+│[  388.361567]  process_one_work+0x7f9/0x1130
+│[  388.361567]  worker_thread+0x596/0x1280
+│[  388.361567]  ? rescuer_thread+0x1000/0x1000
+│[  388.361567]  kthread+0x30f/0x3d0
+│[  388.361567]  ? kthread_create_worker_on_cpu+0xf0/0xf0
+│[  388.361567]  ret_from_fork+0x22/0x30
+│[  388.361567] Modules linked in: rdma_rxe ip6_udp_tunnel udp_tunnel ib_uverbs
+│[  388.386594] ---[ end trace ecc5fcfbfdf7e45a ]---
+│[  388.387159] RIP: 0010:copy_data+0x57/0x600 [rdma_rxe]
+│[  388.387814] Code: 5a 91 d1 85 db 0f 84 65 02 00 00 e8 33 5a 91 d1 49 8d 4f 04 48 b8 00 00 3
+│[  388.390052] RSP: 0018:ffff888118a07a98 EFLAGS: 00010213
+│[  388.390691] RAX: dffffc0000000000 RBX: 000000000000000c RCX: 0000000000000014
+│[  388.391761] RDX: 0000000000000002 RSI: 0000000000000001 RDI: ffff8881102aba00
+│[  388.393749] RBP: ffff88811493b8a0 R08: 000000000000000c R09: 0000000000000000
+|[  388.361567] R10: ffff888108e9c555 R11: ffff88811493bad8 R12: ffff8881102aba00              
+│[  388.361567] R13: ffff88811493b99c R14: dffffc0000000000 R15: 0000000000000010              
+│[  388.361567] FS:  0000000000000000(0000) GS:ffff88811b200000(0000) knlGS:0000000000000000   
+│[  388.361567] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033                              
+│[  388.361567] CR2: 0000000001f9ab08 CR3: 0000000111e7a000 CR4: 00000000000006f0              
+│[  388.361567] Call Trace:                                                                    
+│[  388.361567]  ? _raw_spin_lock_irqsave+0x7b/0xd0                                            
+│[  388.361567]  rxe_responder+0x210c/0x75e0 [rdma_rxe]                                        
+│[  388.361567]  ? __mod_timer+0x57d/0xd20                                                     
+│[  388.361567]  ? _raw_write_lock_irqsave+0xd0/0xd0                             
+│[  388.361567]  ? rxe_resp_queue_pkt+0x30/0x30 [rdma_rxe]                                     
+│[  388.361567]  ? pvclock_clocksource_read+0x2b8/0x510                                        
+│[  388.361567]  ? update_load_avg+0x120/0x17c0                                                
+│[  388.361567]  ? update_curr+0x1fe/0x550                                                     
+│[  388.361567]  ? set_next_entity+0x234/0x6d0                                                 
+│[  388.361567]  ? __switch_to+0x5cd/0xde0                                                     
+│[  388.361567]  rxe_do_task+0x69/0xe0 [rdma_rxe]     
+│[  388.361567]  process_one_work+0x7f9/0x1130                                                 
+│[  388.361567]  worker_thread+0x596/0x1280                                                    
+│[  388.361567]  ? rescuer_thread+0x1000/0x1000                                                
+│[  388.361567]  kthread+0x30f/0x3d0                                                           
+│[  388.361567]  ? kthread_create_worker_on_cpu+0xf0/0xf0                                      
+│[  388.361567]  ret_from_fork+0x22/0x30        
+│[  388.361567] Modules linked in: rdma_rxe ip6_udp_tunnel udp_tunnel ib_uverbs
+│[  388.386594] ---[ end trace ecc5fcfbfdf7e45a ]---
+│[  388.387159] RIP: 0010:copy_data+0x57/0x600 [rdma_rxe]
+│[  388.387814] Code: 5a 91 d1 85 db 0f 84 65 02 00 00 e8 33 5a 91 d1 49 8d 4f 04 48 b8 00 00 3
+│[  388.390052] RSP: 0018:ffff888118a07a98 EFLAGS: 00010213
+│[  388.390691] RAX: dffffc0000000000 RBX: 000000000000000c RCX: 0000000000000014
+│[  388.391761] RDX: 0000000000000002 RSI: 0000000000000001 RDI: ffff8881102aba00              
+│[  388.393749] RBP: ffff88811493b8a0 R08: 000000000000000c R09: 0000000000000000              
+│[  388.395186] R10: ffff888108e9c555 R11: ffff88811493bad8 R12: ffff8881102aba00
+│[  388.396874] R13: ffff88811493b99c R14: dffffc0000000000 R15: 0000000000000010              
+│[  388.398367] FS:  0000000000000000(0000) GS:ffff88811b200000(0000) knlGS:0000000000000000
+│[  388.399964] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033                       
+│[  388.401004] CR2: 0000000001f9ab08 CR3: 0000000111e7a000 CR4: 00000000000006f0
