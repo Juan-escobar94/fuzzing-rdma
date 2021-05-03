@@ -114,7 +114,7 @@ so that we can do the following:
 \end{enumerate}
 
 We also install the modules required for SoftRoCE and RDMA into this file system.
-For simplicity, we took  out the CRC checks inside of the SoftRoCE module. We consider
+For simplicity, we took out the header checksum validation inside of the SoftRoCE module. We consider
 this is not too invasive, because we could also achieve the same results by recomputing the checksum values after modifying
 the headers and writing the new value into the header.
 The kernel we use is compiled with the options described in Subsection \ref{ss:fuzzingkernel}.

@@ -1,10 +1,49 @@
 \section{Evaluation}
 
+In this section present the results achieved with different
+fuzzing tools and explain under which settings we attained this results
+in each subsection.
 
 \subsection{Syzkaller}
 
+We ran Syzkaller under two different kernel versions: 5.7.0 and 5.10.11, the latter was
+the latest stable version available at the time we evaluated Syzkaller.
+
+% We put a simple script that raises the necnecessary modules for SoftRoCE
+We extracted the necessary system calls for specifically targetting the modules
+in charge of RDMA in the Linux Kernel. For this, we wrote a simple python script
+that reads the Syzlang definitions under ``syz/linux/dev\_infiniband\_rdma.txt'' inside the
+Syzkaller source tree. The script uses regular expressions to identify the system call definitions
+in the syntax of Syzlang and outputs the trimmed names of all system calls found in the file (without any arguments)
+as comma separated values into antoher file. This was necessary, because we want to restrict Syzkaller
+to fuzz RDMA modules in the Linux Kernel. We do this by providing all the system calls
+extracted as comma separated values to the configuration parameter ``enable\_syscalls'' of Syzkaller.
+
+% Talk a little bit more about the bugs maybe
+
+For each of the Kernels, we let syzkaller run for a time window of approximately four hours.
+For the \textbf{5.7.0} Kernel, Syzkaller found three distinct bugs,
+triggered by different system call handlers inside RDMA modules. Syzkaller was able to generate
+a C reproducer for two of the crashes.
+For the \textbf{5.10.11} Kernel, Syzkaller found one crash and two warnings.
+
+
+%% Extracted system calls for rdma subsystem,
+
+%% restricted syzkaller to this subset of system calls
+
+%% TWO kernels: 5.10
+
+%% 5.7.0
+%%
+%% start: 17:28 (PC TIME)
+
 \subsection{Proxy Fuzzer}
 
-\subsection{Fastsyzkaller}
+We ran the proxy fuzzer for a time window of approximately three hours.
+We used different RDMA benchmark applications from the OFED Performance Tests repository\footnote{Found under: https://github.com/linux-rdma/perftest}.
+After this time, the proxy fuzzer found two distinct bugs: one warning and a KASAN null pointer dereference error report.
 
-\subsection{DIFUZE}
+
+%%
+%% TODO: in related work.
