@@ -1,7 +1,7 @@
-\section{Implementation} % maybe this is still part of design
+\section{Implementation}\label{s:implementation} % maybe this is still part of design
 
 To carry out the network architecture that will allow us to seamlessly read and modify
-network traffic, as proposed in section \ref{s:design}, we can use the combination of
+network traffic, as proposed in Section~\ref{s:design}, we can use the combination of
 `quick Emulator` QEMU and the Kernel-based Virtual Machine (KVM) as a virtualizer. The qemu-system command which
 starts a virtual machine allows us to specify parameters such as:
 \begin{itemize}
@@ -177,6 +177,8 @@ Algorithm \ref{alg:fuzz} outlines this procedure.
   \Return{Packet}
 \end{algorithm}
 
-After fuzzing a packet, the Fuzzer will write the resulting header into a log file for error reproducibility.
+After the previous step, the Proxy Fuzzer forwards the modified traffic to its destination.
 
-TODO
+%% After fuzzing a packet, the Fuzzer will write the resulting header into a log file for error reproducibility.
+
+%% TODO

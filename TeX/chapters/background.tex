@@ -171,7 +171,7 @@ in a fabricated packet. A later step further might reject the input because a he
 to a specific standart. Reaching further stages past  checks inside a program corresponds to reaching greater
 depths, which is obviously benefitial for succesful fuzzing.
 
-\subsubsection{Fuzzer components}
+\subsubsection{Fuzzer Components}
 
 Modern fuzzers are composed of the following components:
 
@@ -331,6 +331,8 @@ The following configuration options are relevant when fuzzing the kernel:
   aims not to collect as much coverage as possible, but stable coverage (function of the input), by disabling coverage collection from interrupts and from non-deterministic parts of the kernel\cite{KcovCodeCoveragea}
 \end{itemize}
 
+%% TODO panic on warn set.
+
 %%
 %% despite of this difficulties, talk about limitations of compiler based tools: they cannot discover many errors past more obvious ones.
 
@@ -381,11 +383,11 @@ The following configuration options are relevant when fuzzing the kernel:
 %% virtual machines and collects coverage information using KCOV. Syzkaller also comes with a systemcall specification
 %% language (syzlang), designed to aid in targetting specific subsystems inside kernels \cite{syzkaller}.
 
-\subsection{RDMA applications}
+\subsection{RDMA Applications}
 
 %% was released in 2002, bit historical, but I want to mention this
 %% to say what libibverbs are
-The `RDMA Verbs Specification' internet draft describes the abstract
+The ``RDMA Verbs Specification'' internet draft describes the abstract
 interface for RDMA-aware NICs and provides a semantic definition of this
 interface. This semantic definition is simply called Verbs\cite{hillandRDMAProtocolVerbs}.
 
@@ -507,7 +509,7 @@ are listed in Table \ref{tab:bthfields} coincide with the layout of the actual h
 \end{table}
 
 %% why? explain queue pair state machine, show states requiring a connection
-\subsubsection{Challenges posed for fuzzing}\label{s:ibverbs-challenges}
+\subsubsection{Challenges posed for Fuzzing}\label{s:ibverbs-challenges}
 
 Reaching full coverage for RDMA Verbs applications is not trivial. In order to perform RDMA operations, establishment of
 a connection to the remote host, as well as appropriate permissions need to be set up first. The mechanism for accomplishing

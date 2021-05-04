@@ -351,3 +351,79 @@ year = 2015
   file = {/home/juan/Zotero/storage/5KCIXRK8/tuntap.html},
   howpublished = {https://www.kernel.org/doc/Documentation/networking/tuntap.txt}
 }
+
+@book{kerriskLinuxProgrammingInterface2010,
+  title = {The {{Linux Programming Interface}}: {{A Linux}} and {{UNIX System Programming Handbook}}},
+  shorttitle = {The {{Linux Programming Interface}}},
+  author = {Kerrisk, Michael},
+  year = {2010},
+  edition = {First},
+  publisher = {{No Starch Press}}
+}
+
+@inproceedings{shiIndustryPracticeCoverageguided2019,
+  title = {Industry Practice of Coverage-Guided Enterprise {{Linux}} Kernel Fuzzing},
+  booktitle = {Proceedings of the 2019 27th {{ACM Joint Meeting}} on {{European Software Engineering Conference}} and {{Symposium}} on the {{Foundations}} of {{Software Engineering}}},
+  author = {Shi, Heyuan and Wang, Runzhe and Fu, Ying and Wang, Mingzhe and Shi, Xiaohai and Jiao, Xun and Song, Houbing and Jiang, Yu and Sun, Jiaguang},
+  year = {2019},
+  month = aug,
+  pages = {986--995},
+  publisher = {{Association for Computing Machinery}},
+  address = {{New York, NY, USA}},
+  doi = {10.1145/3338906.3340460},
+  abstract = {Coverage-guided kernel fuzzing is a widely-used technique that has helped kernel developers and testers discover numerous vulnerabilities. However, due to the high complexity of application and hardware environment, there is little study on deploying fuzzing to the enterprise-level Linux kernel. In this paper, collaborating with the enterprise developers, we present the industry practice to deploy kernel fuzzing on four different enterprise Linux distributions that are responsible for internal business and external services of the company. We have addressed the following outstanding challenges when deploying a popular kernel fuzzer, syzkaller, to these enterprise Linux distributions: coverage support absence, kernel configuration inconsistency, bugs in shallow paths, and continuous fuzzing complexity. This leads to a vulnerability detection of 41 reproducible bugs which are previous unknown in these enterprise Linux kernel and 6 bugs with CVE IDs in U.S. National Vulnerability Database, including flaws that cause general protection fault, deadlock, and use-after-free.},
+  isbn = {978-1-4503-5572-8},
+  keywords = {bug detection,enterprise Linux,Kernel fuzzing},
+  series = {{{ESEC}}/{{FSE}} 2019}
+}
+
+@article{liangFuzzingStateArt2018,
+  title = {Fuzzing: {{State}} of the {{Art}}},
+  shorttitle = {Fuzzing},
+  author = {Liang, Hongliang and Pei, Xiaoxiao and Jia, Xiaodong and Shen, Wuwei and Zhang, Jian},
+  year = {2018},
+  month = sep,
+  volume = {67},
+  pages = {1199--1218},
+  issn = {1558-1721},
+  doi = {10.1109/TR.2018.2834476},
+  abstract = {As one of the most popular software testing techniques, fuzzing can find a variety of weaknesses in a program, such as software bugs and vulnerabilities, by generating numerous test inputs. Due to its effectiveness, fuzzing is regarded as a valuable bug hunting method. In this paper, we present an overview of fuzzing that concentrates on its general process, as well as classifications, followed by detailed discussion of the key obstacles and some state-of-the-art technologies which aim to overcome or mitigate these obstacles. We further investigate and classify several widely used fuzzing tools. Our primary goal is to equip the stakeholder with a better understanding of fuzzing and the potential solutions for improving fuzzing methods in the spectrum of software testing and security. To inspire future research, we also predict some future directions with regard to fuzzing.},
+  file = {/home/juan/Zotero/storage/Q9RCMGIQ/8371326.html},
+  journal = {IEEE Transactions on Reliability},
+  keywords = {Computer bugs,Fuzzing,reliability,security,Security,software testing,Software testing,survey},
+  number = {3}
+}
+
+@inproceedings{kim2020hfl,
+  title={HFL: Hybrid fuzzing on the linux kernel},
+  author={Kim, Kyungtae and Jeong, Dae R and Kim, Chung Hwan and Jang, Yeongjin and Shin, Insik and Lee, Byoungyoung},
+  booktitle={Proceedings of the 2020 Annual Network and Distributed System Security Symposium (NDSS), San Diego, CA},
+  year={2020}
+}
+
+@inproceedings{pailoorMoonShineOptimizingOS2018,
+  title = {{{MoonShine}}: {{Optimizing}} {{OS}} {{Fuzzer Seed Selection}} with {{Trace Distillation}}},
+  shorttitle = {{{MoonShine}}},
+  booktitle = {27th {{USENIX}} {{Security Symposium}} ({{USENIX}} {{Security}} 18)},
+  author = {Pailoor, Shankara and Aday, Andrew and Jana, Suman},
+  year = {2018},
+  pages = {729--743},
+  isbn = {978-1-939133-04-5},
+  language = {en}
+}
+
+
+@inproceedings{hongNovelDynamicAnalysis2021,
+  title = {A {{Novel Dynamic Analysis Infrastructure}} to {{Instrument Untrusted Execution Flow Across User}}-{{Kernel Spaces}}},
+  booktitle = {2021 {{IEEE Symposium}} on {{Security}} and {{Privacy}} ({{SP}})},
+  author = {Hong, Jiaqi and Ding, Xuhua},
+  year = {2021},
+  pages = {402--418},
+  publisher = {{IEEE Computer Society}},
+  issn = {2375-1207},
+  doi = {10.1109/SP40001.2021.00024},
+  abstract = {Code instrumentation and hardware based event trapping are two primary approaches used in dynamic malware analysis systems. In this paper, we propose a new approach called Execution Flow Instrumentation (EFI) where the analyzer execution flow is interleaved with the target flow in user- and kernel-mode, at junctures flexibly chosen by the analyzer at runtime. We also propose OASIS as the system infrastructure to realize EFI with virtues of the current two approaches, however without their drawbacks. Despite being securely and transparently isolated from the target, the analyzer introspects and controls it in the same native way as instrumentation code. We have implemented a prototype of OASIS and rigorously evaluated it with various experiments including performance and anti-analysis benchmark tests. We have also conducted two EFI case studies. The first is a cross-space control flow tracer and the second includes two EFI tools working in tandem with Google Syzkaller. One tool makes a dynamic postmortem analysis according to a kernel crash report; and the other explores the behavior of a malicious kernel space device driver which evades Syzkaller logging. The studies show that EFI analyzers are well-suited for fine-grained on-demand dynamic analysis upon a malicious thread in user or kernel mode. It is easy to develop agile EFI tools as they are user-space programs.},
+  file = {/home/juan/Zotero/storage/LDQL4XVX/1mbmHSlbmvK.html},
+  isbn = {978-1-72818-934-5},
+  language = {English}
+}

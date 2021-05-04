@@ -1,49 +1,64 @@
-\section{Evaluation}
+\section{Evaluation}\label{s:evaluation}
 
-In this section present the results achieved with different
-fuzzing tools and explain under which settings we attained this results
-in each subsection.
+This section is dedicated to present the results we gathered
+by fuzzing the RDMA stack with different fuzzing tools. We provide
+a brief description about the setting in which the RDMA system was fuzzed
+and we also provide concise information about the bugs we found.
+
+
+%% In this section present the results achieved with different
+%% fuzzing tools and explain under which settings we attained this results
+%% in each subsection.
 
 \subsection{Syzkaller}
 
-We ran Syzkaller under two different kernel versions: 5.7.0 and 5.10.11, the latter was
+We ran Syzkaller under two different Kernel versions: 5.7.0 and 5.10.11. The latter was
 the latest stable version available at the time we evaluated Syzkaller.
 
-% We put a simple script that raises the necnecessary modules for SoftRoCE
 We extracted the necessary system calls for specifically targetting the modules
-in charge of RDMA in the Linux Kernel. For this, we wrote a simple python script
-that reads the Syzlang definitions under ``syz/linux/dev\_infiniband\_rdma.txt'' inside the
+in charge of RDMA in the Linux Kernel. We wrote a simple python script
+that reads the Syzlang definitions from ``syz/linux/dev\_infiniband\_rdma.txt'' inside the
 Syzkaller source tree. The script uses regular expressions to identify the system call definitions
 in the syntax of Syzlang and outputs the trimmed names of all system calls found in the file (without any arguments)
-as comma separated values into antoher file. This was necessary, because we want to restrict Syzkaller
-to fuzz RDMA modules in the Linux Kernel. We do this by providing all the system calls
-extracted as comma separated values to the configuration parameter ``enable\_syscalls'' of Syzkaller.
+as comma separated values into another file. This was necessary, because we want to restrict Syzkaller
+to fuzz RDMA modules in the Linux Kernel. We do this by providing all the previously extracted system calls
+as comma separated values to the configuration parameter ``enable\_syscalls'' of Syzkaller.
 
-% Talk a little bit more about the bugs maybe
+For each of the Kernels, we let Syzkaller run for a time window of approximately four hours.
 
-For each of the Kernels, we let syzkaller run for a time window of approximately four hours.
-For the \textbf{5.7.0} Kernel, Syzkaller found three distinct bugs,
-triggered by different system call handlers inside RDMA modules. Syzkaller was able to generate
-a C reproducer for two of the crashes.
-For the \textbf{5.10.11} Kernel, Syzkaller found one crash and two warnings.
+For the 5.10.11 Kernel, Syzkaller found one crash and two warnings:
+\begin{itemize}
+  \item A warning that originates from calling ib\_uverbs\_post\_send. The error report suggests that something goes wrong during page allocation inside the memory manager, % workdir/20b96
+  \item A warning emerging from calling ib\_uverbs\_unmarshall\_recv, similar to the previous error report, this warning points to page allocation mechanisms inside the memory manager,
+  \item A general protection fault (Null pointer dereference) reported by KASAN, triggered by a call to the function ib\_umem\_get, which is in charge of pinning\footnote{To pin memory is to lock a memory region into RAM:\@ it is guaranteed to be in physical memory, meaning that this memory region will not be swapped\cite{kerriskLinuxProgrammingInterface2010}.} and mapping user space memory for Direct Memory Access.  % workdir/48a33
+\end{itemize}
 
+For all of the bugs mentioned above, Syzkaller was able to generate a C reproducer program.
 
-%% Extracted system calls for rdma subsystem,
-
-%% restricted syzkaller to this subset of system calls
-
-%% TWO kernels: 5.10
-
-%% 5.7.0
-%%
-%% start: 17:28 (PC TIME)
+For the 5.7.0 Kernel, Syzkaller found three distinct bugs: the first two coincide with the warnings found in the 5.10.11 Kernel.
+The third bug it found during this running session was a warning raised during the execution of the function uverbs\_uobject\_fd\_release.
+Syzkaller could not generate a C reproducer for this error and the warning ocurred only once during the entire test session.
 
 \subsection{Proxy Fuzzer}
 
-We ran the proxy fuzzer for a time window of approximately three hours.
-We used different RDMA benchmark applications from the OFED Performance Tests repository\footnote{Found under: https://github.com/linux-rdma/perftest}.
-After this time, the proxy fuzzer found two distinct bugs: one warning and a KASAN null pointer dereference error report.
+We ran the proxy fuzzer for a time window of approximately three hours on the 5.7.0 Kernel.
+We used different popular RDMA benchmark applications called Performance Tests from the core
+Linux RDMA repositories\footnote{Hosted at: https://github.com/linux-rdma/perftest}. These benchmarks
+specifically test the bandwidth and the latency of RDMA operations between two machines.
+We used tests for RDMA Read, Send, Write and Atomic operations.
 
+%% MAKSYM: MENTION WHY NOT THE OTHER KERNEL => WHERE?
 
-%%
-%% TODO: in related work.
+After setting up the network architecture from Section~\ref{s:implementation}, installing the benchmarks in the
+virtual machines and letting our Fuzzer run for the three hour time window, the Proxy fuzzer found two distinct bugs:
+
+\begin{itemize}
+  \item A warning inside the SoftRoCE driver, emerging from rxe\_completer function inside the rxe\_comp.c file,
+  \item A null pointer dereference reported by KASAN, apparently emerging from a call to rxe\_do\_task defined in the file rxe\_task.c, which is also part of the SoftRoCE driver.
+\end{itemize}
+
+Different memory errors reported by KASAN ocurred when executing benchmarks
+for RDMA Atomic operations, for both bandwidth and latency tests.
+Because this errors also ocurr when we turn down the header modifications
+of the proxy fuzzer, we cannot attribute the finding of the errors that
+were product of running benchmarks for RDMA Atomic operations to the proxy fuzzer.

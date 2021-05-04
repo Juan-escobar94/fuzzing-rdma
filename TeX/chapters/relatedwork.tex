@@ -1,19 +1,16 @@
-\section{Related work}
+\section{Related Work}\label{s:related-work}
 
-%% TODO NO CONTENT REWRITE
 
 Research has categorized throughout the years the origins of
-vulnerabilities inside the linux kernel. In 2001,  Chou et. al.
+vulnerabilities inside the linux kernel. In 2001,  Chou et.~al.
 came to the conclusion that driver code has relative error rates
 from 3 and up to 7 times higher than the rest of the kernel\cite{chouEmpiricalStudyOperating2001}.
 
 In 2011, an analysis from bugs ranging from january 2010 to march 2011
 showed that 2/3 of errors originate from loadable modules\cite{chenLinuxKernelVulnerabilities2011}.
 
-One interesting finding of \cite{vanderstoepAndroidProtectingKernel2016} was that around 60\% kernel bugs
+One interesting finding of~\cite{vanderstoepAndroidProtectingKernel2016} was that around 60\% kernel bugs
 are reached from userspace by the ioctl system call.
-
-%% There have been a manifold of approaches to fuzz the linux kernel and its device drivers, originating from different attack surfaces.
 
 \subsection{DIFUZE}\label{ss:difuze}
 
@@ -103,7 +100,7 @@ Modifications made to programs are driven by heuristics and priorizations.\footn
   \item Add system calls that are related to others, e.g. if a program already contains an open system call, a read or write system call on the file descriptor returned by open are more likely to trigger an error rather than say, the getpid or fork system calls.
 \end{itemize}
 
-\subsubsection{Specifying system calls using Syzlang}
+\subsubsection{Specifying System Calls using Syzlang}
 
 %% As we have already discussed, the system call interface is fairly generic
 %% (ioctl even more through its arguments). The System call description language
@@ -113,7 +110,7 @@ Modifications made to programs are driven by heuristics and priorizations.\footn
 One of the core aspects of Syzkaller is the ability to declare system calls using
 the system call description language Syzlang. Its goal is to function as a template
 language for specify system calls based on extended types and specific or constant arguments,
-e.g. open('/dev/infiniband/uverbs0`, flags) is considered different system call from open(`/dev/null`, flags).
+e.g.\ open(``/dev/infiniband/uverbs0'', flags) is considered different system call from open(``/dev/null'', flags).
 
 A great advantage of Syzlang is
 that it allows to describe dependencies between system calls by using resources.
@@ -141,17 +138,17 @@ In contrast, syzlang declarations give a different type to this special kind of 
 By seeing both call declarations and knowing that open returns a file descriptor \emph{resource}, Syzkaller is aware
 that this is resource needs to be passed as the first parameter to a read system call, and \textbf{not just any random integer.}
 
-\subsubsection{Fuzzing subsystems with syzkaller}
+\subsubsection{Fuzzing Subsystems with Syzkaller}
 
 Syzkaller can be configured to use only a subset of all system calls, which are all defined under
-the /sys/\textless architecture\textgreater/ directories. This configuration allows syzkaller to fuzz
+the /sys/\textless~architecture\textgreater/ directories. This configuration allows syzkaller to fuzz
 a specific subsystem in the kernel. With this information one can target specifically
 the infiniband RDMA subsystem of the kernel.
 
 %% it is by using this declarations that one can take the interfaces recovered from
 %% DIFUZE and make syzkaller aware of these.
 
-\subsubsection{Mellanox and syzkaller}
+\subsubsection{Mellanox and Syzkaller}
 
 On the Linux Plumber's conference of 2018, Mellanox\footnote{Mellanox is also mostly in charge of the development  of verbs userspace libraries libibverbs.} --- one of the biggest suppliers of RDMA enabled hardware,
 presented their collaboration with the head Syzkaller
@@ -164,7 +161,7 @@ Mellanox acknowledged during this conference that they use Syzkaller for interna
 %% 4:20:35
 and also mentioned running syzkaller over SoftRoCE, it will crash almost immediatly. It is then clear
 that this method is highly effective, but also this means that there is more work to be done
-for SoftRoCE.
+for SoftRoCE.\@
 
 
 %%
