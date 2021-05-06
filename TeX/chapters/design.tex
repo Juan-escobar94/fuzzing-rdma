@@ -58,7 +58,7 @@ coverage information is, as we have mentioned, an important aspect of efficient 
 
 By having knowledge of the Protocol, the proxy fuzzer can make conscious modifications to fields in the Base Transport
 Header (See Table~\ref{tab:bthfields}), in the hopes of encountering bugs. We refer to conscious modifications here,
-because some fields are required to always have specific values (e.g. Transport Header Version), this fields must remain unmodified.
+because some fields are required to always have specific values (e.g. Transport Header Version), these fields must remain unmodified.
 
 The main advantage is that with this architecture, the proxy fuzzer is able to test code paths
 that were previously untested by the tools presented in Subsections~\ref{ss:difuze},~\ref{ss:syzkaller}~and~\ref{ss:fastsyzkaller}.
