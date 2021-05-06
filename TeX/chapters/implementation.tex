@@ -60,7 +60,7 @@ fails and sets the global error variable ERRNO to EBUSY (device or resource busy
 we dig into the kernel sources for the functions that handle registration and attachment for this type of device,
 we see that the operating system returns  this error when the user registers a device without multiqueue support and this device was already
 attached\footnote{Under a recent Linux Kernel source tree, see drivers/net/tun.c: specifically tun\_set\_iff() and tun\_attach() }.
-We are not interested in enabling multiqueue support, as ...
+
 
 We can connect the TAP device associated with the QEMU process to a virtual bridge, and connect an additional TAP interface to the bridge.
 For each VM, we create then an additional TAP device and a bridge. In this way, we can open the additional tap devices within our fuzzer

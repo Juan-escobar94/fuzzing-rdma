@@ -12,18 +12,9 @@ showed that 2/3 of errors originate from loadable modules\cite{chenLinuxKernelVu
 One interesting finding of~\cite{vanderstoepAndroidProtectingKernel2016} was that around 60\% kernel bugs
 are reached from userspace by the ioctl system call.
 
-\subsection{DIFUZE}\label{ss:difuze}
-
-As ioctl does not conform to any standard, arguments, return values and semantics always vary
+The ioctl system call does not conform to any standard: the arguments, return values and semantics always vary
 depending on the driver in question. It is commonly used as a catch all operations command for
 operations that do not fit the UNIX stream I/O model.
-
-Acknowledging the fact that many of the functionalities to be fulfilled
-by devices cannot be served through traditional system calls like read, write
-and seek, DIFUZE is an interface aware fuzzing tool that targets
-device drivers, by targeting the ioctl() interface\cite{corinaDIFUZEInterfaceAware2017}.
-It was designed with the linux kernel for android devices in mind.
-
 
 One key aspect of the ioctl system call is it's intention to support generality by design.
 Looking at its C prototype:
@@ -35,6 +26,14 @@ Looking at its C prototype:
 The third (optional) argument serves as an untyped pointer to memory. This is implemented as a variadic argument, for at the time
 the interface was designed, void* was not valid C. Nonetheless, the interface expects a single pointer, as opposed to potentially
 many, which the variadic argument syntax would suggest.
+
+\subsection{DIFUZE}\label{ss:difuze}
+
+Acknowledging the fact that many of the functionalities to be fulfilled
+by devices cannot be served through traditional system calls like read, write
+and seek, DIFUZE is an interface aware fuzzing tool that targets
+device drivers, by targeting the ioctl() interface\cite{corinaDIFUZEInterfaceAware2017}.
+It was designed with the linux kernel for android devices in mind.
 
 Commonly, handlers of ioctl calls are implemented as switch statements (on the second argument) which expect specific
 input on the third argument. This poses a challenge for fuzzing, as this cross dependency constitutes a problem for extracting

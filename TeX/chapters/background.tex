@@ -1,13 +1,32 @@
 \section{Background}
 
-This section reviews concepts
+%% TODO: section introduction
 
 
 \subsection{RDMA}
 
-Initially, RDMA was widely available with the InfiniBand (IB) architecture,
+Remote Direct Memory Access (RDMA) allows one machine to
+directly access the memory of a remote machine and increases
+performance by using  zero-copy and CPU offloading optimizations\cite{keyvalueservices},
+which is why this technology has increased in popularity
+within data centers and HPC environments in recent years.
+
+These optimizations work as follows. CPU offloading is enabled by
+the Direct Memory Access controller inside the Network Interface Card (NIC), which
+allows the device controller of the NIC to transfer data directly from/to memory without
+any CPU involvement\cite{comparchbook}. A remote machine can request data within the host and this
+request is handled by the RDMA-enabled NIC through the DMA engine.
+
+% reword this
+The zero-copy optimization allows the DMA engine to get
+the message directly from the user program data space during transmission
+and be placed where the user wants it when the message is received,
+rather than go through intermediary buffers in the operating system
+along the way\cite{comparchbook}.
+
+Initially, RDMA was mostly available within the InfiniBand (IB) architecture,
 which defines network protocols over the link, network and transport layer to move
-RDMA packets across the network~\cite{}. The IB network stack requires however
+RDMA packets across the network~\cite{ibta}. The IB network stack requires however
 specific hardware that is aware of this protocols.
 
 Later came RDMA over Converged Ethernet (RoCE). This specification
@@ -18,49 +37,66 @@ made by RoCEv1, RoCEv2 replaces the network layer protocol of IB for the IP prot
 allows routers to transmit RDMA traffic, therefore making RDMA traffic routable under
 common hardware.
 
-Machines communicating through RDMA require however a special kind of Network Interface Card (NIC),
+% TODO:
+% maybe dont mention CA at all and say that roce adapter cards are the rnic of roce
+Machines communicating through RDMA require however a special kind of NIC,
+named Channel Adapters (CA). RoCE adapter card.
 
 
-A software implementation of RoCE, SoftRoCE
+SoftRoCE, An open source software implementation of the RDMA transport, has been part of the mainline tree of
+the linux kernel since late 2016. SoftRoCE is implemented as a device driver and it provides a complete RDMA
+stack implementation over any regular NIC\cite{softroce}.
 
+Figure~\ref{fig:softroce} shows how SoftRoCE allows a server with commodity hardware (a normal NIC)
+and a server equipped with a RoCE adapter card to communicate through RDMA, bridging a gap in the RDMA ecosystem.
 
+\begin{figure}[h!]
+  \centering
+  \includegraphics[]{softrocepretty}
+  \caption[SoftRoCE]{SoftRoCE allows RDMA interaction with RoCE devices\footnotemark}\label{fig:softroce}
+\end{figure}
+
+\footnotetext{adapted from \url{ https://www.roceinitiative.org/wp-content/uploads/2016/11/SoftRoCE_Paper_FINAL.pdf }}
+
+% TODO:
+% good for testing because it is a software simulation of rdma
 Because SoftRoCE does not require any kind of specialized hardware it plays a major role
 in this work.
 
 
 
----OLD PART---
+%%---OLD PART---
 
-In the setting of modern data centers and HPC clusters, there have been numerous research efforts
-to enhance performance. Data Analytics applications that rely on machine and deep learning techniques demand
-tremendous workloads with their need for massive computing performance, and have led to the wide adoption of graphics
-processing units (GPU) accelerator and multicore (CPU) technologies, which are pushing current datacenter interconnect
-and memory architectures to their limit\cite{shalfHPCInterconnectsEnd2019}.
+%% In the setting of modern data centers and HPC clusters, there have been numerous research efforts
+%% to enhance performance. Data Analytics applications that rely on machine and deep learning techniques demand
+%% tremendous workloads with their need for massive computing performance, and have led to the wide adoption of graphics
+%% processing units (GPU) accelerator and multicore (CPU) technologies, which are pushing current datacenter interconnect
+%% and memory architectures to their limit\cite{shalfHPCInterconnectsEnd2019}.
 
-Furthermore, communication using conventional ethernet fabric is a severe inhibitor to efficient resource sharing.
-For emerging compute intensive and resource hungry applications, substantial increases in bandwidth are a necessity\cite{shalfHPCInterconnectsEnd2019}.
+%% Furthermore, communication using conventional ethernet fabric is a severe inhibitor to efficient resource sharing.
+%% For emerging compute intensive and resource hungry applications, substantial increases in bandwidth are a necessity\cite{shalfHPCInterconnectsEnd2019}.
 
-A shift towards high speed network fabrics has been proven useful,
-because it helps alleviaite the latencies that may arise from node to node communication.
-The usage of InfiniBand fabrics over Ethernet fabrics is common in such setting.
+%% A shift towards high speed network fabrics has been proven useful,
+%% because it helps alleviaite the latencies that may arise from node to node communication.
+%% The usage of InfiniBand fabrics over Ethernet fabrics is common in such setting.
 
-The amount of time that a processor is engaged in the transmition or reception of a message, also known as overhead,
-can also play a major role in performance, since the processor cannot perform other operations.
-This is especially true for applications that are heavy on read/write operations, as they can
-be slowed down significantly by high overheads\footnote{Overhead}\cite{martin97}.
+%% The amount of time that a processor is engaged in the transmition or reception of a message, also known as overhead,
+%% can also play a major role in performance, since the processor cannot perform other operations.
+%% This is especially true for applications that are heavy on read/write operations, as they can
+%% be slowed down significantly by high overheads\footnote{Overhead}\cite{martin97}.
 
-To tackle this problems, a common solution applied in industry is the usage of InfiniBand, which
-is a network architecture which supports RDMA.
-RDMA works by letting the Network Interface Card (NIC) and the User Application (more specifically, its memory)
-directly communicate with each other, therefore bypassing the Operating System (which is known for
-causing high overhead through context switches to kernel space) and thus offloading the CPU. This practice has been
-gaining traction in the HPC environment, aiding multiple machines to mitigate bottlenecks and efficiently act like a
-single large system.
+%% To tackle this problems, a common solution applied in industry is the usage of InfiniBand, which
+%% is a network architecture which supports RDMA.
+%% RDMA works by letting the Network Interface Card (NIC) and the User Application (more specifically, its memory)
+%% directly communicate with each other, therefore bypassing the Operating System (which is known for
+%% causing high overhead through context switches to kernel space) and thus offloading the CPU. This practice has been
+%% gaining traction in the HPC environment, aiding multiple machines to mitigate bottlenecks and efficiently act like a
+%% single large system.
 
-Taking advantage of the InfiniBand architecture requires specialized hardware, as the InfiniBand network architecture defines
-its own protocols for each network layer. Moreover, special NICs, which go by the name of Channel Adapters (CA) in the InfiniBand
-architecture are also required. Specifically, A CA is a programmable DMA engine which special protection features that allow
-DMA operations to be initated locally and remotely\cite{infinibandvol107}.
+%% Taking advantage of the InfiniBand architecture requires specialized hardware, as the InfiniBand network architecture defines
+%% its own protocols for each network layer. Moreover, special NICs, which go by the name of Channel Adapters (CA) in the InfiniBand
+%% architecture are also required. Specifically, A CA is a programmable DMA engine which special protection features that allow
+%% DMA operations to be initated locally and remotely\cite{infinibandvol107}.
 
 
 
@@ -86,39 +122,33 @@ DMA operations to be initated locally and remotely\cite{infinibandvol107}.
 \subsection{The Linux Kernel}
 
 
-As the SoftRoCE driver operates as a subsystem in the Linux Kernel, it is pertinent to briefly
-discuss the implications encompassed by this.
+%% As the SoftRoCE driver operates as a subsystem in the Linux Kernel, it is pertinent to briefly
+%% discuss the implications encompassed by this.
 
 Similar to most Unix kernels, the Linux Kernel is of monotithic nature. All kernel layers
 are integrated into a single program, all of which run under the kernel's privileged execution
 mode. As a consquence of this, and since security checks are only enforced by the kernel code,
-if there are secutiry vulnerabilities inside the kernel, then the whole system has vulnerabilities.
+if there are secutiry vulnerabilities inside the kernel, then the whole system has vulnerabilities\cite{korbethLinuxDeviceDrivers2005}.
 
 One main feature of the Linux Kernel is its ability to extend its functionality during runtime using
 modules. Modules are pieces of code that can be dynamically linked or unlinked at runtime,
 adding functionality to the kernel\cite{korbethLinuxDeviceDrivers2005}.
 
-During the process of kernel configuration, device drivers required for InfiniBand support can
-be compiled as built-in or as modules (Along SoftRoCE, userpace MAD support,
-userspace access (verbs), among others, are required). This should make no difference for our assessment
-about bugs and vulnerabilities for the reasons explained above.
+%% During the process of kernel configuration, device drivers required for InfiniBand support can
+%% be compiled as built-in or as modules (Along SoftRoCE, userpace MAD support,
+%% userspace access (verbs), among others, are required). This should make no difference for our assessment
+%% about bugs and vulnerabilities for the reasons explained above.
 
-
+% TODO:
 \subsection{Fuzzing}
 
-In a nutshell, fuzzing is an approach to software testing where the system being tested is bombarded with test cases generated with another program. The system is then monitored for any flaws exposed by the processing of
+Put simply, fuzzing is an approach to software testing where the system being tested is bombarded with test cases generated with another program. The system is then monitored for any flaws exposed by the processing of
 this input\cite{mcnallyFuzzingStateArt2012}.
 
 Generally, this test cases consist of increasingly random modified otherwise valid inputs. Although modern
 fuzzers do not rely solely on randomness for test case generation, the simplicity of this idea yielded high
 effectiveness: fuzzing is still a widely applied technique between both security and quality assurance experts.
 It has discovered a considerable amount of bugs over the years.
-
-
-%% Software testing is a tool used in software production pipelines, its main goal is to ensure proper program functioning. One common way to test programs is
-%% positive testing, in which these are tested against expected inputs under well defined scenarious (test cases), to produce the desired results.
-%% Fuzzing is a technique used for negative testing, as opposite to the one just mentioned, in which the program is put under malformed or non-expected input. this
-%% has lead to the discovery of many bugs in the recent years (TODO:\@ cite OSS website from lecture)
 
 \subsubsection{Types of Fuzzers}
 
