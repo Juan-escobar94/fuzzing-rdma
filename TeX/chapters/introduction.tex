@@ -10,6 +10,46 @@
 %% instead of normal design, impl and evauluation
 %% user level fuzzing, network level fuzzing, evaluation
 %%
+
+
+%% NEW LAYOUT OF INTRO
+%%
+%% RDMA, what is RDMA. Security issues
+%%
+%% Role of SoftRoCE
+%%
+%% Fuzzing
+
+
+Remote Direct Memory Access (RDMA) enables remote access of data between different machines across a network.
+This technology is increasingly being deployed in High Performance Computing (HPC) and Cloud settings, because
+it offers significant performance improvements over traditional networks. RDMA achieves this by
+leveraging zero-copy and CPU offloading.
+
+
+Different works have exposed inherent flaws in the design of RDMA technologies, these flaws present
+vulnerabilities that lead to Denial of Service (DoS) attacks, unauthorized memory access, impersonation
+attacks through packet injection and performance degradation through resource exhaustion~\cite{rothenbergerReDMArkBypassingRDMA2021}\cite{tsaiDoubleEdgedSwordSecurity2019}.
+
+
+This work focuses on exploring errors in current implementations of RDMA, specifically under Linux.
+The RDMA subsystem of the Linux Kernel is the set of modules that enable RDMA operations within the Linux Kernel,
+this work often refers to this as the RDMA stack.
+
+
+
+
+
+%% Linux kernel because complete software implementation of RDMA. Also relevant in the industry.
+
+
+%% Fuzzing to expose flaws in RDMA Subsystem, including but not limited to SoftRoCE.
+
+
+---OLD PART---
+
+
+
 In the setting of High Performance Computing and cloud, technologies like InfiniBand, which enable Remote Direct Memory Access
 (RDMA) have been gaining considerable importance in the last decades.
 

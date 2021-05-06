@@ -1,5 +1,36 @@
 \section{Background}
 
+This section reviews concepts
+
+
+\subsection{RDMA}
+
+Initially, RDMA was widely available with the InfiniBand (IB) architecture,
+which defines network protocols over the link, network and transport layer to move
+RDMA packets across the network~\cite{}. The IB network stack requires however
+specific hardware that is aware of this protocols.
+
+Later came RDMA over Converged Ethernet (RoCE). This specification
+made RDMA accessible to the ubiquitous Ethernet technology and is available
+in two versions. RoCEv1 replaces the link layer protocol for the ethernet protocol,
+thus enabling the use of regular switches for RDMA services. On top of the modifications
+made by RoCEv1, RoCEv2 replaces the network layer protocol of IB for the IP protocol. This
+allows routers to transmit RDMA traffic, therefore making RDMA traffic routable under
+common hardware.
+
+Machines communicating through RDMA require however a special kind of Network Interface Card (NIC),
+
+
+A software implementation of RoCE, SoftRoCE
+
+
+Because SoftRoCE does not require any kind of specialized hardware it plays a major role
+in this work.
+
+
+
+---OLD PART---
+
 In the setting of modern data centers and HPC clusters, there have been numerous research efforts
 to enhance performance. Data Analytics applications that rely on machine and deep learning techniques demand
 tremendous workloads with their need for massive computing performance, and have led to the wide adoption of graphics
@@ -387,7 +418,7 @@ The following configuration options are relevant when fuzzing the kernel:
 
 %% was released in 2002, bit historical, but I want to mention this
 %% to say what libibverbs are
-The ``RDMA Verbs Specification'' internet draft describes the abstract
+The ``RDMA Verbs Specification' internet draft describes the abstract
 interface for RDMA-aware NICs and provides a semantic definition of this
 interface. This semantic definition is simply called Verbs\cite{hillandRDMAProtocolVerbs}.
 

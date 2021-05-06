@@ -193,19 +193,35 @@ approach can provide efficiency gains.
 
 \subsection{Network Protocol Fuzzers}\label{ss:network-fuzzers}
 
-Another valid approach to put RDMA related drivers under stress is to target the network protocol these drivers
-parse and process. In this Subsection we present Open Source Fuzzers which specifically target network procotols.
+Another valid approach to put RDMA related drivers under stress is to target the network packets these drivers
+parse and process. This Subsection presents Open Source Fuzzers which specifically target network procotols.
 
 \paragraph{}\textbf{Mutiny}~\footnote{https://github.com/Cisco-Talos/mutiny-fuzzer}
 is a tool that uses captured packages (PCAP files)
 to replay and modify legitimate traffic and send it to a target
 application. Mutiny relies on radamsa, a simple black-box fuzzer, to mutate packets.
 
-\paragraph{}\textbf{Sulley}~\footnote{https://github.com/OpenRCE/sulley} is a ...
+\paragraph{}\textbf{Sulley}~\footnote{https://github.com/OpenRCE/sulley} is a fuzzing library / framework that allows for highly automated fuzzing.
+Sulley provides abtract classes that aid in the implementation of a
+monitoring framework. The monitoring framework restarts the target
+application in case of crashes. Sulley will try to reproduce crashes
+by resetting the target into a healthy state and resending the last packets
+before the crash was detected. It starts with the last packet and steps
+back until it finds the sequence of packets that triggered the crash and
+proceeds to record this data. It was designed for a Windows environment and
+is unfortunately not under active maintenance.
 
-\paragraph{}\textbf{BooFuzz}~\footnote{https://github.com/jtpereyda/boofuzz} is a ...
+\paragraph{}\textbf{BooFuzz}~\footnote{https://github.com/jtpereyda/boofuzz} is the active fork of Sulley. Unlike Sulley, BooFuzz has better
+support for a linux host environment and for monitoring linux virtual
+machines. It provides more alternatives for fuzzing, including support for
+ethernet and IP layer fuzzing. Although it provides help for implementing
+core aspects of fuzzing like monitoring and recording of data (like
+Sulley), it has a learning curve it demands of the user to
+implement many details by herself.
 
-This work considered to use these tools at first, but because they present
-limitations concerning granularity control of modified fields or
-require thorough protocol definitions and instantiation
-of packets by the user herself, we decided against them (Section~\ref{ss:prob-nw-fuzzers})
+\paragraph{}
+These tools offer either limited control over granularity of packet field
+modifications, or demand from the Fuzzer developer thorough protocol
+definitions and instantiation of packet objects for the frameworks to
+use (in case of Sulley/BooFuzz). These limitations are described in
+more detail in Section~\ref{ss:prob-nw-fuzzers}.
