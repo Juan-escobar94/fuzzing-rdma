@@ -1,7 +1,16 @@
 
 \begin{abstract}
+  Nowadays, RDMA networks are being deployed in different environments which rely on high performance.
+  The design of the network architecture of RDMA has  concentrated on performance, and previous works have
+  proven that this design has inherent design flaws that expose
+  various types of security concerns.
 
-
-
-
+  In this paper, we focus on exploring the current implementation of the RDMA transport inside the Linux
+  Kernel for implementation errors. To achieve this goal, we apply an efficient software
+  testing technique that has discovered numerous bugs in different applications, namely fuzzing. The system call interface of the Linux
+  Kernel and the network transmissions necessary for RDMA build the attack surface that we apply fuzzing on. For the system call interface, we
+  use a popular system call-based Fuzzer named Syzkaller. For the network
+  transmissions, we design a network architecture and implement an RDMA
+  packet Fuzzer. Both approaches find memory errors and warnings in the
+  RDMA infrastructure of the Linux Kernel.
 \end{abstract}

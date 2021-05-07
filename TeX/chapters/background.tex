@@ -1,53 +1,56 @@
 \section{Background}
 
-%% TODO: section introduction
+To understand the main idea of this work, this section
+acquaints the reader with the necessary
+basics. First we go over RDMA:\@ We talk about the current standards
+and explain how it achieves better performance than traditional network solutions.
 
+After that, we will cover the basics of fuzzing, which is the main workhorse
+of all the types of testing that we exercise. For testing, we make use of a software
+version of the RDMA transport, implemented in the Linux Kernel. This section also
+covers the fuzzing of the Linux Kernel,
+which is different from normal userspace fuzzing.
+
+Lastly, we explain how RDMA applications work
+under a popular implementation of the RDMA Verbs library,
+namely libibverbs.
 
 \subsection{RDMA}
 
 Remote Direct Memory Access (RDMA) allows one machine to
 directly access the memory of a remote machine and increases
-performance by using  zero-copy and CPU offloading optimizations\cite{keyvalueservices},
+performance by using  zero-copy and CPU bypass optimizations\cite{kaliaUsingRDMAEfficiently2014},
 which is why this technology has increased in popularity
 within data centers and HPC environments in recent years.
 
-These optimizations work as follows. CPU offloading is enabled by
-the Direct Memory Access controller inside the Network Interface Card (NIC), which
-allows the device controller of the NIC to transfer data directly from/to memory without
-any CPU involvement\cite{comparchbook}. A remote machine can request data within the host and this
-request is handled by the RDMA-enabled NIC through the DMA engine.
-
-% reword this
-The zero-copy optimization allows the DMA engine to get
+These optimizations work as follows. The Direct Memory Access (DMA) engine inside the Network Interface Card (NIC) allows the NIC to
+transfer data directly from/to memory without any CPU involvement\cite{pattersonComputerOrganizationDesign2016}.
+In this way, a remote computer can request data within the host, and the DMA engine inside
+the RDMA-enabled NIC will handle the request. The zero-copy optimization allows the DMA engine to get
 the message directly from the user program data space during transmission
 and be placed where the user wants it when the message is received,
 rather than go through intermediary buffers in the operating system
-along the way\cite{comparchbook}.
+along the way\cite{pattersonComputerOrganizationDesign2016}.
 
 Initially, RDMA was mostly available within the InfiniBand (IB) architecture,
-which defines network protocols over the link, network and transport layer to move
-RDMA packets across the network~\cite{ibta}. The IB network stack requires however
-specific hardware that is aware of this protocols.
+which defines network protocols over the link, network, and transport layer to move
+RDMA packets across the network~\cite{infinibandvol107}. However, The IB network stack requires
+specific hardware that is aware of these protocols.
 
 Later came RDMA over Converged Ethernet (RoCE). This specification
 made RDMA accessible to the ubiquitous Ethernet technology and is available
-in two versions. RoCEv1 replaces the link layer protocol for the ethernet protocol,
+in two versions. RoCEv1 replaces the link-layer protocol for the ethernet protocol,
 thus enabling the use of regular switches for RDMA services. On top of the modifications
 made by RoCEv1, RoCEv2 replaces the network layer protocol of IB for the IP protocol. This
 allows routers to transmit RDMA traffic, therefore making RDMA traffic routable under
-common hardware.
+common hardware. Nevertheless, Communication endpoints still need an RDMA-enabled NIC;\@ for RoCE, this
+is called the RoCE adapter card.
 
-% TODO:
-% maybe dont mention CA at all and say that roce adapter cards are the rnic of roce
-Machines communicating through RDMA require however a special kind of NIC,
-named Channel Adapters (CA). RoCE adapter card.
-
-
-SoftRoCE, An open source software implementation of the RDMA transport, has been part of the mainline tree of
-the linux kernel since late 2016. SoftRoCE is implemented as a device driver and it provides a complete RDMA
+SoftRoCE, An open-source software implementation of the RDMA transport, has been part of the mainline tree of
+the Linux Kernel since late 2016. SoftRoCE is implemented as a device driver, and it provides a complete RDMA
 stack implementation over any regular NIC\cite{softroce}.
 
-Figure~\ref{fig:softroce} shows how SoftRoCE allows a server with commodity hardware (a normal NIC)
+Figure~\ref{fig:softroce} shows how SoftRoCE allows a server with commodity hardware (a regular NIC)
 and a server equipped with a RoCE adapter card to communicate through RDMA, bridging a gap in the RDMA ecosystem.
 
 \begin{figure}[h!]
@@ -58,183 +61,60 @@ and a server equipped with a RoCE adapter card to communicate through RDMA, brid
 
 \footnotetext{adapted from \url{ https://www.roceinitiative.org/wp-content/uploads/2016/11/SoftRoCE_Paper_FINAL.pdf }}
 
-% TODO:
-% good for testing because it is a software simulation of rdma
-Because SoftRoCE does not require any kind of specialized hardware it plays a major role
-in this work.
-
-
-
-%%---OLD PART---
-
-%% In the setting of modern data centers and HPC clusters, there have been numerous research efforts
-%% to enhance performance. Data Analytics applications that rely on machine and deep learning techniques demand
-%% tremendous workloads with their need for massive computing performance, and have led to the wide adoption of graphics
-%% processing units (GPU) accelerator and multicore (CPU) technologies, which are pushing current datacenter interconnect
-%% and memory architectures to their limit\cite{shalfHPCInterconnectsEnd2019}.
-
-%% Furthermore, communication using conventional ethernet fabric is a severe inhibitor to efficient resource sharing.
-%% For emerging compute intensive and resource hungry applications, substantial increases in bandwidth are a necessity\cite{shalfHPCInterconnectsEnd2019}.
-
-%% A shift towards high speed network fabrics has been proven useful,
-%% because it helps alleviaite the latencies that may arise from node to node communication.
-%% The usage of InfiniBand fabrics over Ethernet fabrics is common in such setting.
-
-%% The amount of time that a processor is engaged in the transmition or reception of a message, also known as overhead,
-%% can also play a major role in performance, since the processor cannot perform other operations.
-%% This is especially true for applications that are heavy on read/write operations, as they can
-%% be slowed down significantly by high overheads\footnote{Overhead}\cite{martin97}.
-
-%% To tackle this problems, a common solution applied in industry is the usage of InfiniBand, which
-%% is a network architecture which supports RDMA.
-%% RDMA works by letting the Network Interface Card (NIC) and the User Application (more specifically, its memory)
-%% directly communicate with each other, therefore bypassing the Operating System (which is known for
-%% causing high overhead through context switches to kernel space) and thus offloading the CPU. This practice has been
-%% gaining traction in the HPC environment, aiding multiple machines to mitigate bottlenecks and efficiently act like a
-%% single large system.
-
-%% Taking advantage of the InfiniBand architecture requires specialized hardware, as the InfiniBand network architecture defines
-%% its own protocols for each network layer. Moreover, special NICs, which go by the name of Channel Adapters (CA) in the InfiniBand
-%% architecture are also required. Specifically, A CA is a programmable DMA engine which special protection features that allow
-%% DMA operations to be initated locally and remotely\cite{infinibandvol107}.
-
-
-
-%%  take again the main argument talking about softroce and its importance
-%%  with possibly more details.
-%%
-%%  introduce the linux kernel, and talk about relevance of
-%%  understanding the compiling process and specific options for this
-%%  work.
-%%
-%%  directly afterwards, talk about device drivers and previous approaches
-%%  made to pursue bug free software in this domain, go into fuzzing
-%%
-%%  explain fuzzing in depth, with specific regard to dev drivers and or
-%%  SoftRoCE, talk about well known fuzzers and their limitations in
-%%  respect to device drivers / rdma.
-%%
-%%  talk specifically about projects that use fuzzing to test
-%%  device drivers, what have they achieved, what are their limitations
-%%
-%%  talk about my approaches and what have I achieved
+SoftRoCE is very suitable for testing because it does not require any specific
+hardware. For this reason, SoftRoCE plays a significant role in this work.
 
 \subsection{The Linux Kernel}
 
+Similar to most Unix kernels, the Linux Kernel is monolithic. All kernel layers
+are integrated into a single program, running under the kernel's privileged execution
+mode. Because security checks are only enforced by the kernel code,
+if there are security vulnerabilities inside the kernel, then the whole system has vulnerabilities\cite{korbethLinuxDeviceDrivers2005}.
 
-%% As the SoftRoCE driver operates as a subsystem in the Linux Kernel, it is pertinent to briefly
-%% discuss the implications encompassed by this.
-
-Similar to most Unix kernels, the Linux Kernel is of monotithic nature. All kernel layers
-are integrated into a single program, all of which run under the kernel's privileged execution
-mode. As a consquence of this, and since security checks are only enforced by the kernel code,
-if there are secutiry vulnerabilities inside the kernel, then the whole system has vulnerabilities\cite{korbethLinuxDeviceDrivers2005}.
-
-One main feature of the Linux Kernel is its ability to extend its functionality during runtime using
+One feature of the Linux Kernel is its ability to extend its functionality during runtime using
 modules. Modules are pieces of code that can be dynamically linked or unlinked at runtime,
-adding functionality to the kernel\cite{korbethLinuxDeviceDrivers2005}.
+adding functionality to the kernel\cite{korbethLinuxDeviceDrivers2005}. The SoftRoCE driver
+and its dependencies for RDMA transport are examples of modules in the Linux Kernel.
 
-%% During the process of kernel configuration, device drivers required for InfiniBand support can
-%% be compiled as built-in or as modules (Along SoftRoCE, userpace MAD support,
-%% userspace access (verbs), among others, are required). This should make no difference for our assessment
-%% about bugs and vulnerabilities for the reasons explained above.
-
-% TODO:
 \subsection{Fuzzing}
 
-Put simply, fuzzing is an approach to software testing where the system being tested is bombarded with test cases generated with another program. The system is then monitored for any flaws exposed by the processing of
-this input\cite{mcnallyFuzzingStateArt2012}.
+In simple terms, fuzzing is an approach to software testing where a system under test gets bombarded with inputs generated by another program.
+The Fuzzer usually monitors the system under test to discover any flaws exposed by the processing of this input\cite{mcnallyFuzzingStateArt2012}.
 
-Generally, this test cases consist of increasingly random modified otherwise valid inputs. Although modern
-fuzzers do not rely solely on randomness for test case generation, the simplicity of this idea yielded high
-effectiveness: fuzzing is still a widely applied technique between both security and quality assurance experts.
-It has discovered a considerable amount of bugs over the years.
+Generally, these test cases originate from valid inputs after undergoing random modifications. Although modern
+fuzzers do not rely solely on randomness for test case generation, the simplicity of this idea yielded great
+results. Fuzzing is getting more and more attention in the area of software security and reliability because of its effective
+ability to find bugs\cite{liangFuzzingStateArt2018}.
 
-\subsubsection{Types of Fuzzers}
+\subsubsection{Fuzzers}
 
-A program that generates input for another program to process, delivers the input and monitors the program
-is called a fuzzer. Fuzzers consist of different components, which will be discribe later.
-
-One important aspect for categorizing fuzzers is code coverage, measuring code coverage is usually implemented
-with help of compiler instrumentation techniques. In such case, code coverage is measured by the number of
-basic blocks reached by program execution given a \textbf{specific input}. Efficient fuzzers are capable of producing inputs that reach high coverage.
-
-Fuzzers can be categorized into 3 main types:
+A Fuzzer is a program that generates and delivers inputs for another program. A crucial metric for categorizing Fuzzers is
+the amount of knowledge they require over the system under test. Based on this metric, Fuzzers are categorized into 3 main types\cite{mcnallyFuzzingStateArt2012}:
 
 \begin{itemize}
     \item Blackbox Fuzzer: No knowledge of target program internals, the testing process is limited to observing the target's input and output behaviour. Consequently, they have no means of measuring coverage and can only provide input to the target.
-    \item Whitebox Fuzzer: These fuzzers can take advantage of the source code of the target application, not only allowing them better insights into how the system works, but also to benefit from code coverage measurements.
-      %% these fuzzers rely on the knowledge of the source code of the target application, making them more efficient ( TODO: symbolic execution tools, model checkers that improve coverage, computed coverage guides the generator)
-    \item Graybox Fuzzer: This applies to fuzzers that do not fall into any of the previous categories. Source code of the target may not be available, but other means of inspection such as reverse engineering, static analysis, or executing inside a debugger are the usual workhorses of graybox fuzzers\cite{mcnallyFuzzingStateArt2012}.
+    \item Whitebox Fuzzer: These Fuzzers can take advantage of the source code of the target application, not only allowing them better insights into how the system works, but also to benefit from code coverage measurements.
+    \item Graybox Fuzzer: This applies to Fuzzers that do not fall into any of the previous categories. Source code of the target may not be available, but other means of inspection such as reverse engineering, static analysis, or executing inside a debugger are the usual workhorses of graybox Fuzzers.
 \end{itemize}
 
-%% Test case generation based on coverage is described by the algorithm in Algorithm~\ref{alg:genalg}.
+With the source code of the target program at hand, a Fuzzer can benefit from coverage information to
+better guide the fuzzing process and yield better results. Given a specific input,
+the number of basic blocks reached by program execution measures the code coverage.
 
-%% \RestyleAlgo{boxruled}
-%% \SetAlgoVlined
-%% \begin{algorithm}[h!]
-%%   \caption{Algorithm for Coverage-Based Data Generation}\label{alg:genalg}\LinesNumberedHidden\DontPrintSemicolon
-%%   \KwIn{A set of Inputs $I$}
-%%   \KwOut{An Input Corpus $C$, such that $I \subseteq C$}
-%%   $C \gets I$\;
-%%   $coverageOld \gets 0$\;
-%%   \While{true}{
-%%     $newInput \gets generateInput()$\;
-%%     $coverageNew \gets runTargetProgram(newInput)$\;
+%% **TODO**
 
-%%     \If{$coverageOld < coverageNew$} {
-%%       $C \gets C \cup \{newInput\} $
-%%     }
-%%     $coverageOld \gets coverageNew$
-%%   }
-%%   \Return{C}
-%% \end{algorithm}
+%% Along with coverage, depth is also an important metric when evaluating fuzzing efficiency. A program
+%% might reject a test case if, for example, the computed checksum is not equal to the checksum encountered
+%% in a fabricated packet. A later step further might reject the input because a header section does not conform
+%% to a specific standart. Reaching further stages past  checks inside a program corresponds to reaching greater
+%% depths, which is obviously benefitial for succesful fuzzing.
 
-%% %% TODO: highlight importance with an if cascade program.
-%% To highlight the importance of using coverage information to generate new test inputs, consider the program in
-%% Listing~\ref{lst:ifcascade}. Reaching the potential out-of-bounds access would require a blind fuzzer (i.e. without code coverage
-%% information) to go over ${\frac{1}{2}}^{40}$test cases\footnote{${\frac{1}{256}}^{5}$ test cases, as the char type is 8 bits wide.}.
-
-%% \begin{lstlisting}[caption={If-Cascade Program}, label={lst:ifcascade},  style=CStyle, float, floatplacement=h!]
-%% char input[6];
-
-%% void read_input() {
-%%   fgets(input, 6, stdin);
-
-%%   if (input[0] == 'o') {
-%%     if (input[1] == 's') {
-%%       if (input[2] == 't') {
-%%         if (input[3] == 'u') {
-%%           if (input[4] == 'd') {
-%%             crash_program();
-%%           }
-%%         }
-%%       }
-%%     }
-%%   }
-%%   operate_normally();
-%% }
-
-%% void crash_program() {
-%%   int index = random() % 10;
-%%   /* potential out-of-bounds access */
-%%   input[index] = 'S';
-%% }
-
-
-%% \end{lstlisting}
-
-
-
-Along with coverage, depth is also an important metric when evaluating fuzzing efficiency. A program
-might reject a test case if, for example, the computed checksum is not equal to the checksum encountered
-in a fabricated packet. A later step further might reject the input because a header section does not conform
-to a specific standart. Reaching further stages past  checks inside a program corresponds to reaching greater
-depths, which is obviously benefitial for succesful fuzzing.
+Nowadays, Fuzzers also rely on more advanced techniques like symbolic execution,
+taint tracking analysis, and machine learning aided input generation.
 
 \subsubsection{Fuzzer Components}
 
-Modern fuzzers are composed of the following components:
+Fuzzers contain at least some of the following components:
 
 \paragraph{Fuzz Generator:}
 
@@ -242,10 +122,10 @@ A fuzz generator is in charge of creating test inputs to run on the system under
 approaches serve this purpose\cite{mcnallyFuzzingStateArt2012}:
 
 \begin{itemize}\label{ss:fuzzer-components}
-    \item Mutative fuzzer: the idea is to start with a sample input or a set of inputs, and \
+    \item Mutative Fuzzer: the idea is to start with a sample input or a set of inputs, and \
     modify a part of it. This set of inputs is commonly refered to as the \textbf{input corpus}; the mutative approach is useful for inputs that must conform to defined structures, coverage is not
     always good. A positive aspect of this type of generators is that they do not require protocol knowledge.
-    \item Generative fuzzer: generate inputs from scratch. This can yield higher coverages, at the cost of requiring
+    \item Generative Fuzzer: generates inputs from scratch. This can yield higher coverages, at the cost of requiring
     knowledge of protocols. It can be based on templates or grammars.
 \end{itemize}
 
@@ -290,10 +170,9 @@ Algorithm~\ref{alg:genalg} describes this procedure.
   \Return{C}
 \end{algorithm}
 
-%% TODO: highlight importance with an if cascade program.
 To highlight the importance of using code coverage information to generate new test inputs, consider the program in
 Listing~\ref{lst:ifcascade}. Reaching the potential out-of-bounds access would require a blind fuzzer (i.e. without code coverage
-information) to go over ${\frac{1}{2}}^{40}$test cases\footnote{${\frac{1}{256}}^{5}$ test cases, as the char type is 8 bits wide.}.
+information) to go over ${\frac{1}{256}}^{5} = {\frac{1}{2}}^{40}$test cases, in the worst case. %\footnote{${\frac{1}{256}}^{5}$ test cases, as the char type is 8 bits wide.}.
 
 \begin{lstlisting}[caption={If-Cascade Program}, label={lst:ifcascade},  style=CStyle, float, floatplacement=H]
 char input[6];
@@ -323,7 +202,9 @@ void crash_program() {
 \end{lstlisting}
 
 If a Fuzzer leverages code coverage information to generate new inputs, the number of input cases it needs to generate
-to discover this deeply nested crashes is substantially reduced. % afl jpeg out of thin air
+to discover these deeply nested crashes is substantially reduced. In the example of Listing~\ref{lst:ifcascade}, the Fuzzer will consider strings preffixed
+with ``o'', ``os'' and ``ost'' to be more interesting, because they trigger new code paths. It will prefer generating strings with these prefixes and
+find the crash caused by the out-of-bounds access more efficiently.
 
 
 \paragraph{Delivery Mechanisms}
@@ -335,16 +216,14 @@ target program is aimed at, Fuzzers use delivery mechanisms simulate those used 
 Delivery mechanisms are usually one of:
 
 \begin{itemize}
-    \item Files
-    \item Environment variables
-    \item Invocation parameters (command-line or API)
-    \item Network transmissions
-    \item Operating system events (including mouse and keyboard events)
-    \item Operating system resources
-    \item Direct memory injection (risk to corrupt state and abort program)
+    \item Files,
+    \item Environment variables,
+    \item Invocation parameters (command-line or Application Programming Interface (API)),
+    \item Network transmissions,
+    \item Operating system events (including mouse and keyboard events),
+    \item Operating system resources,
+    \item Direct memory injection (risk to corrupt state and abort program).
 \end{itemize}
-
-% (TODO: expand more on this based on which one is chosen)
 
 \paragraph{Monitoring Frameworks}
 
@@ -357,21 +236,16 @@ There are two broad classes of monitoring frameworks\cite{mcnallyFuzzingStateArt
     \item Remote monitoring: more limited that their counterpart by nature, remote monitowring frameworks recognize \
     a failure by looking for network interruptions.
 \end{itemize}
-
-%% IMPORTANT: Fuzzing linux kernel, explain compile options relevant for fuzzing
 \subsection{Fuzzing the Linux Kernel}\label{ss:fuzzingkernel}
-%% https://youtu.be/YwX4UyXnhz0?t=452
-%%
 
 As opposed to userspace fuzzing, fuzzing the Linux Kernel
 presents some challenges and limitations. As an example, in single threaded
 userspace applications, coverage is a function of the input, it has a
 deterministic behaviour; collecting coverage for the kernel however, is
 very different;  the kernel contains a high degree
-non-deterministic behavior. In \cite{okechInvestigatingExecutionPath2013}, a
+non-deterministic behavior. In~\cite{okechInvestigatingExecutionPath2013}, a
 simple test program consisting of an open and a read system call revealed
 559 distinct execution paths, which were mainly attributed to interrupts and context switches.
-% without interrupt and switches 33 unique paths
 
 Finding races is another desirable outcome in this scenario. This is
 challenging because this kind of bugs depend on exact
@@ -397,57 +271,8 @@ The following configuration options are relevant when fuzzing the kernel:
 %%
 %% despite of this difficulties, talk about limitations of compiler based tools: they cannot discover many errors past more obvious ones.
 
-%%
-%%
-%% TODO: remove or rewrite this section, it sucks.
-%% \subsection{Fuzzers REMOVE OR REWRITE}
-
-%% There are well over dozens of open source fuzzing tools and libraries \cite{awesome-fuzzing}, but the purpose of this work, the following
-%% are well worth mentioning:
-%% % TODO: in each section, why not chosen.
-
-
-%% \paragraph{AFL}
-
-%% The American Fuzzy Lop fuzzer is a brute force fuzzer that uses instrumentation guided coverage to
-%% efficiently fuzz the system under test \cite{afl}. AFL can operate as a white-box fuzzer (source code is availabljkke)
-%% to achieve best results, this requires compiling the source code with a drop in replacement for gcc/clang
-%% called afl-gcc.
-
-
-%% \paragraph{Libfuzzer}
-
-%% Libfuzzer is a coverage guided evolutionary fuzzing engine, it was designed with the intent to fuzz
-%% libraries, feeding fuzzed inputs to an entry point (target function). In order to achieve this Libfuzzer
-%% is linked with the library under test. It can be combined with AFL for example, this would require both processes to be
-%% periodically restarted in order to 'use' each others findings \cite{libfuzzer}.
-
-
-%% \paragraph{kAFL}
-
-%% % problem: requires intel PT
-%% % TODO: clean up this section.
-
-%% As AFL is limited to userspace and lacks support for kernel space\cite{kafl}, kAFL was designed with overcoming
-%% the obstacles that are inherent when fuzzing kernels: kernel crashes (panics) usually make the host operating system
-%% unavailable, collecting coverage from a broken system is neither possible, nor perhaps desired.
-
-%% The inherent non-determinism in kernel level programs: kernel threads, statefulness and similar mechanisms. (libfuzzer)
-%% this makes fuzzing kernel code challenging.
-
-%% coverage information is provided by Intel's Processor Trace (PT) technology. Logic used to perform
-%% mutations and scheduling closely resembles the one used in AFL\cite{kafl}
-
-%% \paragraph{Syzkaller}
-
-%% Syzkaller is a fuzzing framework designed to fuzz kernels at the system call level. It operates on multiple
-%% virtual machines and collects coverage information using KCOV. Syzkaller also comes with a systemcall specification
-%% language (syzlang), designed to aid in targetting specific subsystems inside kernels \cite{syzkaller}.
-
 \subsection{RDMA Applications}
 
-%% was released in 2002, bit historical, but I want to mention this
-%% to say what libibverbs are
 The ``RDMA Verbs Specification' internet draft describes the abstract
 interface for RDMA-aware NICs and provides a semantic definition of this
 interface. This semantic definition is simply called Verbs\cite{hillandRDMAProtocolVerbs}.
@@ -461,12 +286,12 @@ The libibverbs API handles the control path for creation, modification, querying
 
 For the control path, the library uses system calls that are handled by file operations on device nodes
 registered by the uverbs kernel module. The kernel module passes control down to lower-level drivers.
-These lower-level drivers can be drivers for real hardware, or drivers for software devices, like SoftRoCE.
+These lower-level drivers can be drivers for real hardware, or drivers for software devices, like SoftRoCE.\@
 
 In contrast to the control path,  the library implements the data path with calls that are made
 directly to the low level drivers of the NIC using a doorbell mechanism: the host CPU %via Programmed IO
 writes a short doorbell message directly to the
-NIC, indicating there is work to be done\cite{KaliaUsingRDMAEfficiently2014}. This data flow mechanism completely circumvents the
+NIC, indicating there is work to be done\cite{kaliaUsingRDMAEfficiently2014}. This data flow mechanism completely circumvents the
 host Kernel, enabling the Kernel bypass\cite{kaliaDesignGuidelinesHigh2016}.
 
 The Queue Pair one of the most important resources managed by RDMA applications, it represents an endpoint
@@ -484,12 +309,9 @@ transitioned through several states, shown in Figure \ref{fig:qpstatemachine}.
 \begin{figure}[h!]
   \centering
   \includegraphics[height=8cm, keepaspectratio]{qpstatemachine}
-  \caption[Queue Pair state machine]{The Queue Pair state machine, slightly adapted from \cite{QPStateMachine2012}.}
+  \caption[Queue Pair state machine]{The Queue Pair state machine, slightly adapted from~\cite{QPStateMachine2012}.}
   \label{fig:qpstatemachine}
 \end{figure}
-
-%% A WQ is either a SEND work queue or a RECEIVE work queue
-%% QPs have both queues associated to them
 
 The Queue Pair consists of two Work Queues, a Send Queue and a Receive
 Queue. The Work Queues handle sending and receiving messages.
@@ -500,12 +322,11 @@ the status of the Work Request that was posted. Depending on the transport
 mode and the Work Request, a successful status can depend on the receiver
 side to answer with an acknowledgment packet.
 
-
 Directly after creation, a Queue Pair is in a Reset state. In the Reset state,
 a Queue Pair cannot post any Work Requests to any
 of its Work Queues, and any packets it receives will be silently dropped.
 A Queue Pair can transition from one state to another when the program calls ibv\_modify\_qp() ---
-transitions marked with blue in Figure \ref{fig:qpstatemachine} originate from this function call.
+transitions marked with blue in Figure~\ref{fig:qpstatemachine} originate from this function call.
 Work Requests may be posted to the Receive Queue once the Queue Pair has transitioned to a Ready To Receive (RTR) state,
 similarly Work Requests may be posted to the Send Queue after reaching the Ready To Send (RTS) state. The Queue Pair will silently drop
 packets until it has at least reached the RTR state.
@@ -517,8 +338,7 @@ that won't process further Work Requests posted to the Send Queue\cite{QPStateMa
 Errors ocurring during the ibv\_modify\_qp() call will bring the Queue Pair
 to the Error state, Work Request errors may transition the Queue Pair to this state as well\cite{QPStateMachine2012}.
 
-
-\subsubsection{Transport Layer: The Base Transport Header} % OR: role of the device driver before
+\subsubsection{Transport Layer: The Base Transport Header}
 
 One of the tasks of low level drivers for RDMA devices is to process
 packet headers of the transport layer protocol. This task roughly consists
@@ -533,9 +353,8 @@ There are also header extensions for the base header, but their presence is dict
 by the operation code. We will focus in this section on base transport header,
 because they are common to all RDMA traffic.
 
-Base transport headers are 96 bits long, Table
-\ref{tab:bthfields} shows the corresponding field descriptions. The order in which fields
-are listed in Table \ref{tab:bthfields} coincide with the layout of the actual header.
+Base transport headers are 96 bits long, Table~\ref{tab:bthfields} shows the corresponding field descriptions. The order in which fields
+are listed in Table~\ref{tab:bthfields} coincide with the layout of the actual header.
 
 \begin{table}[h]
   \begin{tabular}{| m{10em} | m{3em} | m{15em} |}
@@ -554,7 +373,7 @@ are listed in Table \ref{tab:bthfields} coincide with the layout of the actual h
     \hline
     Partition Key & 16 &  Partitioning allows isolation among systems sharing the same fabrics. If using partition, this field is required to match partition key stored at the receiver or else the packet will be discarded\\
     \hline
-    Reserved (variant) & 8 &  transmited as 0s, this field is ignored on the receiver side.\\
+    Reserved & 8 &  transmited as 0s, this field is ignored on the receiver side.\\
     \hline
     Destination QP & 24 &  specifies a number to identify the destination queue pair.\\
     \hline
@@ -569,7 +388,6 @@ are listed in Table \ref{tab:bthfields} coincide with the layout of the actual h
   \label{tab:bthfields}
 \end{table}
 
-%% why? explain queue pair state machine, show states requiring a connection
 \subsubsection{Challenges posed for Fuzzing}\label{s:ibverbs-challenges}
 
 Reaching full coverage for RDMA Verbs applications is not trivial. In order to perform RDMA operations, establishment of
@@ -588,60 +406,3 @@ in the previous sections, Queue Pairs are modeled by a state machine and they mu
 state to another. Since driver code enforces that the Queue Pair must be in a specific state for operations like
 handling incoming packets, there might be bugs that are tied to specific states. It is meaningful to test
 RDMA applications running in a connected environmnent.
-
-% \subsubsection{Programming with ibverbs}
-
-%% TODO how does it work, basics, state machine
-%% specific bug => requires a specific state
-
-
-
-%% It is pertinent to evaluate some aspects of linux and the kernel as the nature of
-%% the system in which the SoftRoCE driver operates, allows its code to operate
-%% under the most privileged level, along the kernel itself.
-
-%% One of the main features of the linux kernel is its ability to extend
-%% its functionality during runtime. Code that can be added (or removed) to the kernel
-%% while is running are called modules. Each module is made of object code that can
-%% be dynamically linked with the insmod or modprobe executables\cite{ldd3}.
-
-%% Security checks in linux are enforced in the kernel code, if there are security vulnerabilities inside
-%% the kernel, then the whole system has vulnerabilities.\cite{ldd3}
-
-% Talk about the linux kernel being expandable by modules, which operate on
-% so called `kernel space` or privileged mode, this makes them in turn mandatory
-% to be well tested, because a malfunctioning module in this case a device 
-% driver a potential target inside the system.
-
-% TODO: move this to methodology
-%% When compiling the linux kernel, we want to enable support for the InfiniBand network stack, virtualization and
-%% also builtin functionality that will come to aid during the fuzzing process, the following are worth
-%% mentioning:
-
-%% \begin{itemize}
-%%     \item Kcov: Code coverage for fuzzing. From \cite{kerneldocs-kcov} Kvoc exposes kernel code coverage information in a form suitable\
-%%     for coverage-guided fuzzing (randomized testing). Coverage data of a running kernel is exported via\ Background
-%%     a debugfs file called kcov. % TODO:
-%%     % NOTE ON KCOV profiling data will only become accesibleonce debugfs has been mounted mount -t debugfs none /sys/kernel/debug
-%%     \item KASAN: The Kernel Address Sanitizer is a dynamic memory error detector. It provides\
-%%     information for finding use-after-free and out-of-bound bugs, it uses compiler generated\
-%%     instrumentation code to check every memory access \cite{kerneldocs-kasan} % TODO:
-%%     \item Fault Injection: interest to test error handling paths of IO operations, malloc, futex calls, etc: reason => a big portion of kernel code is concerned with error handling operations. => related work
-%%
-%% \end{itemize}
-
-%% TODO: mention UBSAN and KCSAN
-
-
-%% \subsection{RDMA with Infiniband}
-
-%% RoCE is a standard for RDMA over Ethernet, which allows leveraging RDMA semantics over an Ethernet network without needing
-%% to resort to TCP transport.
-%% % According to \cite{rdmamanual} RoCE provided the most efficient low lattency Ethernet solution to the day of (their?) writing (in 2015).
-%% % TODO: maksym => just say that RoCE is generally cheaper because it does not require specialized switches.
-%% \paragraph{Rxe: Soft-RoCE}
-
-%% Soft-RoCE is a software implementation of the RDMA transport (over Ethernet), it has been developed as a github
-%% community project, with help from IBM, Mellanox and other companies.This software driver provides us an
-%% uncomplicated manner to test RDMA technologies without needing to use real hardware, it provides a complete RDMA
-%% stack implementation over any NIC \cite{mellanox-community}.

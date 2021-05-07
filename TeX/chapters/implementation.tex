@@ -21,9 +21,8 @@ A TAP device is a virtual interface that provides packet reception and transmiss
 TAP devices operate on the data link layer, they carry ethernet frames.
 A TAP device can be created from a user program by opening the device `/dev/net/tun'  and issuing a
 corresponding ioctl() call to register a new interface with the kernel\cite{krasnyanskyUniversalTUNTAP}.
-Listing \ref{lst:tapifr} shows a snippet demonstrating how to register/open a TAP device.
+Listing~\ref{lst:tapifr} shows a snippet demonstrating how to register/open a TAP device.
 
-%% snippet of the open and ioctl call.
 \begin{lstlisting}[caption={Registering/opening a virtual TAP interface}, label={lst:tapifr},  style=CStylespecial]
  #include <linux/if.h>
  #include <linux/if_tun.h>
@@ -54,7 +53,7 @@ the interface can be made persistent with a further ioctl() call. Persistent int
 by another process by issuing the exact same open() and ioctl() calls as when registering the interface
 for the first time.
 %This is part of what the ip tuntap command does\footnote{iproute2: https://git.kernel.org/pub/scm/network/iproute2/iproute2.git/ }
-A TAP interface is the type of backend we associate to the VM's network interface. However, a problem arises
+A TAP interface is the type of backend we associate to the virtual machine's network interface. However, a problem arises
 when we trying to open the TAP devices that are associated with the QEMU process: the ioctl() call
 fails and sets the global error variable ERRNO to EBUSY (device or resource busy). When
 we dig into the kernel sources for the functions that handle registration and attachment for this type of device,
@@ -63,23 +62,22 @@ attached\footnote{Under a recent Linux Kernel source tree, see drivers/net/tun.c
 
 
 We can connect the TAP device associated with the QEMU process to a virtual bridge, and connect an additional TAP interface to the bridge.
-For each VM, we create then an additional TAP device and a bridge. In this way, we can open the additional tap devices within our fuzzer
+For each virtual machine, we create then an additional TAP device and a bridge. In this way, we can open the additional tap devices within our fuzzer
 process. Figure \ref{fig:networkdetailed} shows the layout of the network architecture we describe.
 
 \begin{figure}[h]
   \centering
   \includegraphics[width=\linewidth]{proxyfuzzernetworkdetailed}
-  \caption[Proxy fuzzer network architecture]{Detailed network architecture for the proxy fuzzer}
-  \label{fig:networkdetailed}
+  \caption[Proxy Fuzzer network architecture]{Detailed network architecture for the Proxy Fuzzer}\label{fig:networkdetailed}
 \end{figure}
 
-Now that we can open the interfaces labeled as tap1 and tap2 in figure \ref{fig:networkdetailed}, we ``connect'' the
+Now that we can open the interfaces labeled as tap1 and tap2 in Figure~\ref{fig:networkdetailed}, we ``connect'' the
 network by forwarding the traffic from tap1 into tap2 inside the fuzzer process, and vice-versa. The fuzzer
 process takes a frame by simply calling read() on the TAP device and forwards it to the other device by calling write().
-Listing \ref{lst:fwdtraffic} shows how the porcess forwards traffic in one direction. The other direction is handled by a
+Listing~\ref{lst:fwdtraffic} shows how the porcess forwards traffic in one direction. The other direction is handled by a
 child process in an analogous manner.
 
-\begin{lstlisting}[caption={Forwarding traffic in the proxy fuzzer process}, label={lst:fwdtraffic},  style=CStyle, float, floatplacement=H]
+\begin{lstlisting}[caption={Forwarding traffic in the Proxy Fuzzer process}, label={lst:fwdtraffic},  style=CStyle, float, floatplacement=H]
   /* file descriptors for tap1, tap2 interfaces */
   int fd_tap1, fd_tap2;
 
@@ -101,7 +99,7 @@ child process in an analogous manner.
 
 \subsection{Preparing the Guests' Environment}
 
-We want to prepare a basic Linux system with support for RDMA and SoftRoCE.
+We want to prepare a basic Linux system with support for RDMA and SoftRoCE.\@
 To accomplish this we mount a blank file into our file system and use the tool
 debootstrap to install a debian distribution inside the mount point directory.
 We can specify a list of packages that debootstrap will install into the system,
@@ -109,33 +107,33 @@ so that we can do the following:
 
 \begin{enumerate}
   \item Build RDMA applications using the libibverbs library,
-  \item Create a virtual rdma device over an existing interface: this requires a recent version of the iproute2 package,
+  \item Create a virtual RDMA device over an existing interface (this requires a recent version of the iproute2 package),
   \item Build and run performance benchmarks for RDMA applications.
 \end{enumerate}
 
 We also install the modules required for SoftRoCE and RDMA into this file system.
-For simplicity, we took out the header checksum validation inside of the SoftRoCE module. We consider
-this is not too invasive, because we could also achieve the same results by recomputing the checksum values after modifying
+For simplicity, we took out the header checksum validation from the SoftRoCE module. We consider
+that this is not too invasive, because we could also achieve the same results by recomputing the checksum values after modifying
 the headers and writing the new value into the header.
-The kernel we use is compiled with the options described in Subsection \ref{ss:fuzzingkernel}.
+The kernel we use is compiled with the options described in Subsection~\ref{ss:fuzzingkernel}.
 
 \subsection{Fuzzing the Traffic}
 
-The Proxy fuzzer parses the frames read and determines wether it carries RDMA traffic, i.e. a Base Transport Header.
-If there is RDMA traffic, the fuzzer mutates a random field of the header (see Table \ref{tab:bthfields}), with the following exceptions:
+The Proxy Fuzzer parses the frames received from read() and determines wether it carries RDMA traffic, i.e.\@ a Base Transport Header.
+If there is RDMA traffic, the fuzzer mutates a random field of the header (see Table~\ref{tab:bthfields}), with the following exceptions:
 
 \begin{itemize}
   \item Transport Header version, because the SoftRoCE driver enforces the requirement of this field always being equal to 0: if its not, SoftRoCE will drop the packet.
   \item Destination QP, because when there is no Queue Pair with a matching number, the packet will also be dropped.
 \end{itemize}
 
-After fuzzing the Base Transport Header fields, the fuzzer will check wether the OpCode determines the presence of Header Extensions,
-which the fuzzer will try to parse accordingly and modify as well.
+After fuzzing the Base Transport Header fields, the fuzzer will check whether the OpCode determines the presence of Header Extensions,
+which the fuzzer will try to parse and modify accordingly as well.
 
 The Fuzzer modifies the fields by generating a random byte (ranging from 0x00 to 0xFF) and
 assigns to a random header field the result of such header field XOR'd with the random byte. This is done a random number
 of rounds, with a limit of 3 rounds per packet. It can occur that the fuzzer leaves the packet intact if the number of rounds is zero.
-Algorithm \ref{alg:fuzz} outlines this procedure.
+Algorithm~\ref{alg:fuzz} outlines this procedure.
 
 \RestyleAlgo{boxruled}
 \SetAlgoVlined

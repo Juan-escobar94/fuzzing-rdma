@@ -21,13 +21,11 @@
 %% Fuzzing
 
 
-Remote Direct Memory Access (RDMA) enables remote access of data between different machines across a network.
-This technology is increasingly being deployed in High Performance Computing (HPC) and Cloud settings, because
+Remote Direct Memory Access (RDMA) enables remote access of data between different machines across a network\cite{rothenbergerReDMArkBypassingRDMA2021}.
+This technology is increasingly being deployed in High Performance Computing (HPC) and Cloud settings because
 it offers significant performance improvements over traditional networks.
 
-%% RDMA achieves this by leveraging zero-copy and CPU offloading.
-
-Different works have exposed inherent flaws in the design of RDMA technologies, these flaws present
+Different works have exposed inherent flaws in the design of RDMA technologies. These flaws present
 vulnerabilities that lead to Denial of Service (DoS) attacks, unauthorized memory access, impersonation
 attacks through packet injection and performance degradation through resource
 exhaustion~\cite{rothenbergerReDMArkBypassingRDMA2021}\cite{tsaiDoubleEdgedSwordSecurity2019}.
@@ -35,69 +33,22 @@ exhaustion~\cite{rothenbergerReDMArkBypassingRDMA2021}\cite{tsaiDoubleEdgedSword
 This work focuses on exploring errors in current implementations of RDMA, specifically under Linux.
 To achieve this goal, we use a software testing technique called fuzzing.
 
-Fuzzing tools or Fuzzers have discovered numerous bugs in the past, partly due to the fact
-that Fuzzers do not necessarily require knowledge of the system under test to do their job. However, to better guide
-the fuzzing process, code coverage information or knowledge about the source code of the target program can be used by the fuzzer.
+Fuzzing tools or Fuzzers have discovered numerous bugs in the past, partly because
+Fuzzers do not necessarily require knowledge of the system under test to do their job. However, to achieve better results,
+The Fuzzer can use code coverage information or knowledge about the source code of the target program.
 
-We evaluate different attack surfaces such as the system call interface inside Linux and the
-communication channel used by RDMA, because they provide different entry points from which
+We evaluate different attack surfaces, like the system call interface inside Linux and the
+communication channel that RDMA uses. They provide distinct entry points from which
 we can fuzz the implementation of the RDMA infrastructure inside Linux.
 
 When evaluating the system call interface, we use a popular system call based Fuzzer named Syzkaller.
 Syzkaller generates programs consisting of multiple system calls and runs them in several virtual machines. The
-Fuzzer Syzkaller also provides the option to further specify the system calls through a language called Syzlang,
-allowing us to specifically target the RDMA subsystem of the Linux Kernel.
+Fuzzer Syzkaller also provides the option to specify the system calls in more detail through a language called Syzlang,
+allowing us to target the RDMA subsystem of the Linux Kernel.
 
 For targetting the RDMA communication channel, we design a proxy architecture and carry out the implementation
 of a Proxy Fuzzer that allows us to target the device drivers, which are in charge of processing the packet headers
 defined by the network layer protocol.
 
-
-During the fuzzing sessions, both Syzkaller and the Proxy Fuzzer were able to find
-different bugs inside the RDMA implementation inside current versions of the Linux Kernel.
-
-
-
-%% Linux kernel because complete software implementation of RDMA. Also relevant in the industry.
-
-
-%% Fuzzing to expose flaws in RDMA Subsystem, including but not limited to SoftRoCE.
-
-
-%% ---OLD PART---
-
-
-
-%% In the setting of High Performance Computing and cloud, technologies like InfiniBand, which enable Remote Direct Memory Access
-%% (RDMA) have been gaining considerable importance in the last decades.
-
-%% As the combination IP/Ethernet is an ubiquitous technology, the need for a technology similar
-%% to the one used by InfiniBand networks which allows
-%% RDMA without having to resort to specialized hardware arised. RDMA over Converged Ethernet (RoCE) is an modification
-%% to the InfiniBand stack, which replaces the link and physical layers for those of Ethernet,
-%% allowing to use regular switches to provide InfiniBand services. Since  RoCE traffic does not carry an IP header,
-%% it cannot be routed across the boundaries of Ethernet networks using regular IP routers\cite{rocev2}.
-
-%% The RoCEv2 specification is an extension of the former, it allows routers to transport
-%% IB packets contained within a UDP datagram over the IP protocol. But Nevertheless, RDMA operations still require RoCE adapter
-%% cards as to take the involvement of the OS out of the picture.
-
-%% Given the relevance and usefulness of SoftRoCE, as well as the monolithic nature of the linux kernel,
-%% it is a major concern for SoftRoCE to be safe and reliable.
-%% Using a software testing technique which has been increasily being leverage due to its efficiency in
-%% discovering bugs, namely fuzzing, this work aims to explore and describe ways to identify the attack surface
-%% of this particular device driver and the API it exposes.
-
-%% For very complex systems like the linux kernel, with over thirteen million lines of code, merely auditing the
-%% source code for vulnerability discovery (by means of e.g. code reviews or static analysis tools) is not enough.
-%% Fuzzing has been a succesful tool in unveiling a wide variety of vulnerabilities in open source projects like chromium,
-%% firefox and the linux kernel (TODO add citations).
-
-%% Software is nowadays designed by programmers with a well defined scenario in mind. Most of the time, software tests
-%% are routinely written in a way so that the expected behaviour of a program still holds, given expected input, i.e. the input
-%% the program was designed for.
-
-%% Fuzzing is a testing technique does not require any kind of knowledge from the target program (also commonly addressed as system under test),
-%% as the basic idea it bases upon is to throw random input into the application until it breaks or something unintended happens. Under
-%% this basic idea of what defines fuzzing, we will evaluate different approaches and assert their effectiveness or usefulness
-%% at putting SoftRoCE under stress.
+During the fuzzing sessions, both Syzkaller and the Proxy Fuzzer were able to trigger
+memory errors and warnings in the RDMA implementation inside current versions of the Linux Kernel.

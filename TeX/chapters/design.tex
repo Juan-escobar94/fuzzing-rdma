@@ -26,14 +26,14 @@ A sensible choice for testing connected applications is to
 target the communication channel that these applications use.
 A proxy architecture allows a process to sit in the middle of two applications
 and read and/or modify the traffic before forwarding such traffic to the original destination.
-We will refer to this process in the middle as the proxy fuzzer. Simply put, the proxy fuzzer
+We will refer to this process in the middle as the Proxy Fuzzer. Simply put, the Proxy Fuzzer
 takes incoming traffic from an RDMA application and forwards it to another RDMA application.
-In doing so, the proxy fuzzer can modify the traffic in such a way that it specifically targets the RDMA stack of a target machine.
+In doing so, the Proxy Fuzzer can modify the traffic in such a way that it specifically targets the RDMA stack of a target machine.
 
 \begin{figure}[h]
    \centering
    \includegraphics[width=\linewidth]{proxyfuzzerconcept}
-   \caption[Proxy fuzzer concept]{Basic concept of a Proxy fuzzer, the red arrow denotes fuzzed traffic.}\label{fig:fuzzerconcept}
+   \caption[Proxy Fuzzer concept]{Basic concept of a Proxy Fuzzer, the red arrow denotes fuzzed traffic.}\label{fig:fuzzerconcept}
 \end{figure}
 
 Figure~\ref{fig:fuzzerconcept} depicts the concept of this architecture. Because we also want to be able to differentiate
@@ -43,7 +43,7 @@ and can retain the series of packets that were responsible for triggering the cr
 
 The fuzzer only modifies the packet headers of RDMA traffic, because it is concerned
 with testing the RDMA stack and the RDMA stack only. Thus, the Base Transport Header and Header extensions
-are the actual fuzzing targets.  If the proxy fuzzer were to modify IP or Ethernet Headers,
+are the actual fuzzing targets.  If the Proxy Fuzzer were to modify IP or Ethernet Headers,
 the packets would most likely not reach their destination. Fuzzing other
 network protocols is out of the scope of this work. The RDMA payload is completely ignored,
 because RDMA device drivers are also not concerned with it. % TODO:\@ As we have already said this work is mainly concerned with fuzzing rdma with softroce as our entry point (or something similar)
@@ -56,11 +56,11 @@ coverage information is, as we have mentioned, an important aspect of efficient 
 
 \subsection{Advantages of this Approach}
 
-By having knowledge of the Protocol, the proxy fuzzer can make conscious modifications to fields in the Base Transport
+By having knowledge of the Protocol, the Proxy Fuzzer can make conscious modifications to fields in the Base Transport
 Header (See Table~\ref{tab:bthfields}), in the hopes of encountering bugs. We refer to conscious modifications here,
 because some fields are required to always have specific values (e.g. Transport Header Version), these fields must remain unmodified.
 
-The main advantage is that with this architecture, the proxy fuzzer is able to test code paths
+The main advantage is that with this architecture, the Proxy Fuzzer is able to test code paths
 that were previously untested by the tools presented in Subsections~\ref{ss:difuze},~\ref{ss:syzkaller}~and~\ref{ss:fastsyzkaller}.
 
 It is relevant to mention that even though this design was conceived with
@@ -68,63 +68,8 @@ SoftRoCE at hand, it can be applied to anything that processes Base
 Transport Headers, even real RDMA-enabled NICs. This is true because processing of
 Base Transport Headers is implemented at the hardware level.
 
-
-
 %% To specifically target the RDMA network stack,
 %% We can connect two RDMA applications in different machines and
-
-
-
-
-
-%% Mention that the goal of this design is to test the driver.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 %% Since many state-of-the-art fuzzers do not directly address some of the challenges
 %% posed by RDMA applications (see Section \ref{s:ibverbs-challenges}), I propose a fuzzer that plays the role
