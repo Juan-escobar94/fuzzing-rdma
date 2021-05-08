@@ -2,8 +2,8 @@
 
 To carry out the network architecture that will allow us to seamlessly read and modify
 network traffic, as proposed in Section~\ref{s:design}, we can use the combination of
-`quick Emulator` QEMU and the Kernel-based Virtual Machine (KVM) as a virtualizer. The qemu-system command which
-starts a virtual machine allows us to specify parameters such as:
+``quick Emulator'' QEMU and the Kernel-based Virtual Machine (KVM) as a virtualizer. The qemu-system command, which
+starts a virtual machine, allows us to specify parameters such as:
 \begin{itemize}
   \item The kernel boot image,
   \item Disk image files from which we can provide a prepared file system, % TODO: which contains the installed modules for RDMA and the latest iproute2 version to enable software rdma devices,

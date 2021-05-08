@@ -1,1 +1,11 @@
 \section{Conclusion}
+
+This work set as its goal to search implementation errors in current versions of the RDMA architecture of the Linux Kernel.
+To achieve this, an effective software testing technique, namely fuzzing, was applied.
+We approached the task at hand through the system call interface of the Kernel and through the network transmissions that RDMA low-level
+drivers process. Both approaches were able to trigger warning messages and found memory errors reported by KASAN.\@
+We believe that the nature
+of the warnings and errors found by the system call-based approach to be more shallow because it does not require the same resource initialization that RDMA applications undergo.  For the network approach,
+we design a proxy architecture that allows us to modify the ongoing traffic of two connected applications. Because this approach can test code paths that require proper initialization of resources and connection
+establishment, we believe that the warnings and errors found in this way
+could not have been easily discovered by the other approach.

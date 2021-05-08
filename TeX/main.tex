@@ -8,6 +8,8 @@
 \graphicspath{ {./assets/} }
 \usepackage{xcolor}
 \usepackage{listings}
+\usepackage{ragged2e}
+\usepackage{titling}
 \usepackage[linesnumberedhidden]{algorithm2e}
 
 \definecolor{mGreen}{rgb}{0,0.6,0}
@@ -15,7 +17,11 @@
 \definecolor{mPurple}{rgb}{0.58,0,0.82}
 \definecolor{backgroundColour}{rgb}{0.95,0.95,0.92}
 
-
+\newcommand{\matnr}{4746089} % Matrikelnummer
+\newcommand{\gutachter}{Dr.-Ing. Carsten Weinhold \\ Dr.-Ing. Michael Roitzsch}
+\newcommand{\betreuer}{M.Sc. Maksym Planeta}
+\newcommand{\thesistype}{Bachelorarbeit}
+\newcommand{\degreetype}{Bachelor of Science (B.\,Sc.)}
 
 
 \lstdefinestyle{CStylespecial}{
@@ -69,10 +75,15 @@
 \title{Fuzzing Framework for RDMA-networks}
 \author{Juan Andrés Osorio Escobar}
 \date{\today}
-\maketitle
+% \maketitle
+
+
+
+\include{thesistitle}
 
 \include{chapters/task}
 
+\include{chapters/erklaerung}
 \include{chapters/abstract}
 
 \tableofcontents
