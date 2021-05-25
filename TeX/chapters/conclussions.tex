@@ -9,3 +9,8 @@ of the warnings and errors found by the system call-based approach to be more sh
 we design a proxy architecture that allows us to modify the ongoing traffic of two connected applications. Because this approach can test code paths that require proper initialization of resources and connection
 establishment, we believe that the warnings and errors found in this way
 could not have been easily discovered by the other approach.
+
+After our findings with both Syzkaller and the Proxy Fuzzer, we also conclude that Fuzzing is a
+very appropriate approach to test even enterprise-level software. Fuzzing has virtually a minimum requirement
+of almost no effort to implement, but the results of the fuzzing process heavily depend on the
+amount of time and resources invested.

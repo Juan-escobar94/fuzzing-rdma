@@ -109,8 +109,8 @@ the number of basic blocks reached by program execution measures the code covera
 %% to a specific standart. Reaching further stages past  checks inside a program corresponds to reaching greater
 %% depths, which is obviously benefitial for succesful fuzzing.
 
-Nowadays, Fuzzers also rely on more advanced techniques like symbolic execution,
-taint tracking analysis, and machine learning aided input generation.
+%% Nowadays, Fuzzers also rely on more advanced techniques like symbolic execution,
+%% taint tracking analysis, and machine learning aided input generation.
 
 \subsubsection{Fuzzer Components}
 
@@ -122,26 +122,21 @@ A fuzz generator is in charge of creating test inputs to run on the system under
 approaches serve this purpose\cite{mcnallyFuzzingStateArt2012}:
 
 \begin{itemize}\label{ss:fuzzer-components}
-    \item Mutative Fuzzer: the idea is to start with a sample input or a set of inputs, and \
-    modify a part of it. This set of inputs is commonly refered to as the \textbf{input corpus}; the mutative approach is useful for inputs that must conform to defined structures, coverage is not
-    always good. A positive aspect of this type of generators is that they do not require protocol knowledge.
-    \item Generative Fuzzer: generates inputs from scratch. This can yield higher coverages, at the cost of requiring
-    knowledge of protocols. It can be based on templates or grammars.
+    \item Mutative Fuzzer: Mutative Fuzzer: test case generation starts based on existing data. The Fuzzer takes any part of this data and modifies it, generating a new test case.
+    \item Generative Fuzzer: a generative Fuzzer creates test cases from scratch. Generative Fuzzers can yield higher coverages, at the cost of relying on more knowledge of the structures expected by the target. They can be based on templates or grammars.
 \end{itemize}
 
-These two main categories can be further described by the techniques used to generate their data:
+These two main categories can be further characterized by the techniques they use to generate to generate data\cite{mcnallyFuzzingStateArt2012}:
 
 \begin{itemize}
-    \item Oblivious: generates or mutates data randomly, this brings of course poor coverage.
-    \item Template based: provided an input template, the fuzzer will only modify/generate specific parts \
-    allowed by the template.
-    \item Block based: represent data as nested data blocks of varying types as opposed to string sequences.
-    \item Grammar based: make use of a previously given grammar, to generate input.
-    \item Protocol fuzzer: knows about concepts such as replies and responses, and in which \
-    sequence to reply responses in order to test certain functionality.
+    \item Oblivious: this technique does not take into account any type of structure expected by the target program. It is convenient to set up and can be highly effective, but it is hard to get past shallow errors. An oblivious mutative Fuzzer selects any byte inside the test case and performs random modifications.
+    \item Template-based: Template-based Fuzzers rely on some degree of understanding of the structure accepted by the target program. A template may dictate the structure and define types for different components, which conform to a well-formed test case. Both mutative and generative Fuzzers can use such templates to constrain their values\cite{mcnallyFuzzingStateArt2012}. In doing so,  they generate test cases that are less likely to result in rejection during a preliminary processing step.
+    \item Grammar-based: A grammar-based Fuzzer uses grammars that generate at least a subset
+of the input language accepted by the target program. Grammar-based Fuzzers are often generative, but this does not exempt mutative Fuzzers from using grammars as well.
+    %\item Block based:
 \end{itemize}
 
-\paragraph{Coverage guided fuzzing:}
+\paragraph{Coverage-guided fuzzing:}
 
 Test case generation based on code coverage is an important aspect for efficient Fuzzers.
 The Fuzzer generates a new input based on the input corpus it already has. After
@@ -173,6 +168,7 @@ Algorithm~\ref{alg:genalg} describes this procedure.
 To highlight the importance of using code coverage information to generate new test inputs, consider the program in
 Listing~\ref{lst:ifcascade}. Reaching the potential out-of-bounds access would require a blind fuzzer (i.e. without code coverage
 information) to go over ${\frac{1}{256}}^{5} = {\frac{1}{2}}^{40}$test cases, in the worst case. %\footnote{${\frac{1}{256}}^{5}$ test cases, as the char type is 8 bits wide.}.
+\newpage
 
 \begin{lstlisting}[caption={If-Cascade Program}, label={lst:ifcascade},  style=CStyle, float, floatplacement=H]
 char input[6];
@@ -209,9 +205,8 @@ find the crash caused by the out-of-bounds access more efficiently.
 
 \paragraph{Delivery Mechanisms}
 
-A delivery mechanism is a fuzzer component which is in charge of presenting input (from the generator)
-to the system under test. Normally, as finding abnormal functioning during regular operation of the
-target program is aimed at, Fuzzers use delivery mechanisms simulate those used by the system under test\cite{mcnallyFuzzingStateArt2012}.
+A delivery mechanism is a Fuzzer component that is in charge of presenting input (from the generator)
+to the system under test. Typically, as finding abnormal functioning during regular operation of the target program is aimed at, Fuzzers use delivery mechanisms to simulate those used by the system under test\cite{mcnallyFuzzingStateArt2012}.
 
 Delivery mechanisms are usually one of:
 
@@ -219,7 +214,7 @@ Delivery mechanisms are usually one of:
     \item Files,
     \item Environment variables,
     \item Invocation parameters (command-line or Application Programming Interface (API)),
-    \item Network transmissions,
+    \item Network transmissions (e.g.\@ packets),
     \item Operating system events (including mouse and keyboard events),
     \item Operating system resources,
     \item Direct memory injection (risk to corrupt state and abort program).
@@ -227,15 +222,16 @@ Delivery mechanisms are usually one of:
 
 \paragraph{Monitoring Frameworks}
 
-Detecting that the system under test has crashed as a result of some input is essential to the fuzzing process.
+Detecting that the system under test has crashed after processing some input is essential to the fuzzing process.
+Monitoring frameworks are in charge of detecting crashes; in some cases, resetting or reverting the target program to a healthy state.
 There are two broad classes of monitoring frameworks\cite{mcnallyFuzzingStateArt2012}:
 
 \begin{itemize}
-    \item Local monitoring: the fuzzer is installed in the same system as the target. It may look for additional output \
+    \item Local monitoring: in this case, the Fuzzer is installed in the same system as the target. It may look for additional output \
     from the target (such as core dump files) in order to assert that the target has encountered errors.
-    \item Remote monitoring: more limited that their counterpart by nature, remote monitowring frameworks recognize \
-    a failure by looking for network interruptions.
+    \item Remote monitoring: Fuzzers that resort to remote monitoring aremore limited that their counterpart by nature, remote monitowring frameworks recognize a failure by looking for network interruptions.
 \end{itemize}
+
 \subsection{Fuzzing the Linux Kernel}\label{ss:fuzzingkernel}
 
 As opposed to userspace fuzzing, fuzzing the Linux Kernel
@@ -266,14 +262,9 @@ The following configuration options are relevant when fuzzing the kernel:
   aims not to collect as much coverage as possible, but stable coverage (function of the input), by disabling coverage collection from interrupts and from non-deterministic parts of the kernel\cite{KcovCodeCoveragea}
 \end{itemize}
 
-%% TODO panic on warn set.
-
-%%
-%% despite of this difficulties, talk about limitations of compiler based tools: they cannot discover many errors past more obvious ones.
-
 \subsection{RDMA Applications}
 
-The ``RDMA Verbs Specification' internet draft describes the abstract
+The ``RDMA Verbs Specification'' internet draft describes the abstract
 interface for RDMA-aware NICs and provides a semantic definition of this
 interface. This semantic definition is simply called Verbs\cite{hillandRDMAProtocolVerbs}.
 

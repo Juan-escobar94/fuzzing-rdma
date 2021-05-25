@@ -1,17 +1,77 @@
 \section{Discussion}
-%% talk about findings of Syzkaller and proxy fuzzer
 
-%% talk about other tools for fuzzing network protocols and why they were not so relevant (act as clients)
-%% Other tools problems:
-%% BooFuzz:
-%%  * is either a client or a server. different instances of (Fuzzable) communication per channel. => this is seamlessly done with proxy fuzzer
-%%  * must provide packet content from scratch and let the application know which fields it can fuzz. impractical because different packet anatomies.
-%%  * Even though it is easy to install, bla bla von oben. SEITE VERLINKEN.
-%%  * does not provide coverage support out of the box.
-%%  * multiple sessions for each communication channel => awkward to establish a connection.
-%%
-%%  The network architecture that Proxy Fuzzer has is far more convenient, because:
-%%    * Test connected applications, QP already in ready state.
+This Section details the results achieved by the fuzzing tools
+that were used for testing the RDMA infrastructure inside the Linux Kernel.
+There were some tools that we were not able to test with,
+this part of the work tries to give insight into problems that we encountered.
+Lastly, this Section goes into possible future work.
+
+
+\subsection{Evaluation}\label{s:evaluation}
+
+We present here the results we gathered
+by fuzzing the RDMA stack with different fuzzing tools. We provide
+a brief description about the setting in which the RDMA system was fuzzed
+and present concise information about the potential bugs found. Fixing these
+bugs is out of the scope of this work.
+
+\subsubsection{Syzkaller}
+
+We ran Syzkaller under the  5.7.0 and 5.10.11. The latter was
+the latest stable version available at the time we evaluated Syzkaller.
+
+We extracted the necessary system calls for specifically targetting the modules
+in charge of RDMA in the Linux Kernel. We wrote a simple python script
+that reads the Syzlang definitions from ``syz/linux/dev\_infiniband\_rdma.txt'' inside the
+Syzkaller source tree. The script uses regular expressions to identify the system call definitions
+in the syntax of Syzlang and outputs the trimmed names of all system calls found in the file (without any arguments)
+as comma separated values into another file. This was necessary, because we want to restrict Syzkaller
+to fuzz RDMA modules in the Linux Kernel. We do this by providing all the previously extracted system calls
+as comma separated values to the configuration parameter ``enable\_syscalls'' of Syzkaller.
+
+For each of the Kernels, we let Syzkaller run for a time window of approximately four hours.
+
+For the 5.10.11 Kernel, Syzkaller found one crash and two warnings:
+\begin{itemize}
+  \item A warning that originates from calling ib\_uverbs\_post\_send. The error report suggests that something goes wrong during page allocation inside the memory manager, % workdir/20b96
+  \item A warning emerging from calling ib\_uverbs\_unmarshall\_recv, similar to the previous error report, this warning points to page allocation mechanisms inside the memory manager,
+  \item A general protection fault (Null pointer dereference) reported by KASAN, triggered by a call to the function ib\_umem\_get, which is in charge of pinning\footnote{To pin memory is to lock a memory region into RAM:\@ it is guaranteed to be in physical memory, meaning that this memory region will not be swapped\cite{kerriskLinuxProgrammingInterface2010}.} and mapping user space memory for Direct Memory Access.  % workdir/48a33
+\end{itemize}
+
+For all of the bugs mentioned above, Syzkaller was able to generate a C reproducer program.
+
+For the 5.7.0 Kernel, Syzkaller found three distinct bugs: the first two coincide with the warnings found in the 5.10.11 Kernel.
+The third bug it found during this running session was a warning raised during the execution of the function uverbs\_uobject\_fd\_release.
+Syzkaller could not generate a C reproducer for this error and the warning ocurred only once during the entire test session.
+
+\subsubsection{Proxy Fuzzer}
+
+We ran the Proxy Fuzzer for a time window of approximately three hours on the 5.7.0 Kernel.
+We used different popular RDMA benchmark applications called Performance Tests from the core
+Linux RDMA repositories\footnote{Hosted at: \url{https://github.com/linux-rdma/perftest}}. These benchmarks
+specifically test the bandwidth and the latency of RDMA operations between two machines.
+We used tests for RDMA Read, Send, Write and Atomic operations.
+
+After setting up the network architecture from Section~\ref{s:implementation}, installing the benchmarks in the
+virtual machines and letting our Fuzzer run for the three hour time window, the Proxy Fuzzer found a warning and a memory error:
+
+\begin{itemize}
+  \item A warning inside the SoftRoCE driver, emerging from rxe\_completer function inside the rxe\_comp.c file,
+  \item A null pointer dereference reported by KASAN, emerging from a call to the function rxe\_do\_task defined in the file rxe\_task.c, which is also part of the SoftRoCE driver.
+\end{itemize}
+
+The full reports for all potential bugs can be found in Appendix~\ref{s:app-err}.\\
+
+Different memory errors reported by KASAN (slab-out-of-bounds) ocurred when executing benchmarks
+for RDMA Atomic operations, for both bandwidth and latency tests.
+Because this errors also ocurr when we turn down the header modifications
+of the Proxy Fuzzer, we cannot attribute the finding of the errors that
+were product of running benchmarks for RDMA Atomic operations to the Proxy Fuzzer.
+
+We could not test the Proxy Fuzzer on the 5.10.11 version of the Kernel because ibv\_reg\_mr,
+the libibverbs function necessary to register a memory region, always triggered a memory error
+caught by KASAN\footnote{Under our configuration, this also causes a kernel panic (crash).}.
+
 
 \subsection{Difficulties with other Tools}
 
@@ -27,9 +87,33 @@ other approaches.
 Nevertheless, we examined the programs created by Syzkaller and compared them to programs that generate crashes.
 Syzkaller serializes programs into a specific binary format and saves them in a binary file called corpus.db.
 Extracting the programs required us to extend Syzkaller with a module that dumps all programs in the corpus into a file.
-The output file contains all programs inside the corpus separated by a marker string.
+The output file contains all programs inside the corpus separated by a marker string. Listing~\ref{lst:syzprogram} shows
+a shortened version of program generated by Syzkaller, consisting of two system calls.
+
+\begin{lstlisting}[caption={Program generated by Syzkaller}, label={lst:syzprogram}, float, floatplacement=H]
+--PROG-START--
+openat$uverbs0
+Meta Args:
+	fd
+	const[18446744073709551516, const]
+	file
+	ptr[in, buffer]
+	flags
+	const[2, const]
+	mode
+write$QUERY_QP
+Meta Args:
+	fd
+	fd_rdma
+	ptr[inout, query_qp_cmd]
+	len
+--PROG-END--
+\end{lstlisting}
+
+
 % MAKSYM: show some program outputs???
-From this information, we can see that most of the programs generated by Syzkaller are one, two or three system calls long.
+After extracting everything from the corpus file,
+we could observe that many of the programs generated by Syzkaller are just one, two or three system calls long.
 The minimized versions of the programs which caused crashes consist of two to four system calls. This suggests
 that errors occur with programs that tend to be longer than most programs generated by Syzkaller.
 In contrast with Syzkaller, Fastsyzkaller runs a modified generation algorithm, which is inclined to create programs
@@ -44,7 +128,7 @@ originating a sequence of different system calls with specific arguments.
 
 \subsubsection{DIFUZE}\label{ss:disc-difuze}
 
-Inside the Syzkaller's source tree, comments containing TODOs inside the Syzlang definitions of the RDMA subsystem (``syz/linux/rdma.txt'') and
+Inside the Syzkaller's source tree, comments containing TODOs inside the Syzlang definitions of the RDMA subsystem (``syz/linux/dev\_infiniband\_rdma.txt'') and
 the presence of only three ioctl system call definitions led us to think that using DIFUZE for generating ioctl interface definitions
 was a very promising path. The generated .json files that contain correct ioctl definitions could have been easily ported into the
 Syzlang specification of the RDMA subsystem inside of Syzkaller. This could have improved Syzkaller's performance at fuzzing
@@ -135,11 +219,9 @@ branches~\cite{shiIndustryPracticeCoverageguided2019}. Syzkaller benefits from a
 research and will continue to do so in the future, it is the center of recent research works
 (~\cite{kim2020hfl},\cite{hongNovelDynamicAnalysis2021} and~\cite{pailoorMoonShineOptimizingOS2018}).
 For all these reasons, it is sensible to put effort into developing a more specialized framework for continuous fuzzing
-of the RDMA stack based on Syzkaller, which could be similar to the proposal of~\cite{shiIndustryPracticeCoverageguided2019}.
-
-% UGLY
-%% For all this reasons, it is a reasonable approach to develop a continuous Fuzzing Framework
-%% based on Syzkaller, as proposed by~\cite{shiIndustryPracticeCoverageguided2019}.
+of the RDMA stack based on Syzkaller, which could be similar to the proposal of~\cite{shiIndustryPracticeCoverageguided2019}:
+A fully automatized continous fuzzing infrastructure, on which a master node is in charge of retrieving and building the latest Kernels
+and lets the slave nodes continously run Syzkaller on these Kernels.
 
 The results of fuzzing are correlated with the quality of the seed/input files~\cite{liangFuzzingStateArt2018}.
 In the case of Syzkaller, the starting point (seed) for test case generation is the set of definitions

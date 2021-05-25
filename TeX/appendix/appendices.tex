@@ -1,13 +1,32 @@
-\appendix 
-\section{Building and Configuring the Linux Kernel}
+\appendix
+\section{Reports for Errors and Warnings encountered}\label{s:app-err}
 
-Dealing with the build system of the linux kernel for the first time was cumbers an `uphill' experience for me.
-For really detailed information on how to find specific configuration options, as well as how
-to efficiently navigate the kernel sources, I recommend reading The Linux Kernel In a Nutshell by
-Greg Kroah-Hartman, from O'Reilly Media.
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=\textwidth]{syzkaller-warning1}
+  \caption{First Warning encountered by fuzzing with Syzkaller}
+\end{figure}
 
-The specific configuration options we want to enable in order to fuzz SoftRoCE are (use Make menuconfig):
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=\textwidth]{syzkaller-warning2}
+  \caption{Second Warning encountered by fuzzing with Syzkaller}
+\end{figure}
 
-\begin{itemize}
-    \item KASAN: located under
-\end{itemize}
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=\textwidth]{syzkaller-kasan}
+  \caption{NULL Pointer Dereference found with Syzkaller}
+\end{figure}
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=\textwidth]{proxy-warning}
+  \caption{Warning encountered by fuzzing with the Proxy Fuzzer}
+\end{figure}
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=\textwidth]{proxy-kasan}
+  \caption{NULL Pointer Dereference found with Proxy Fuzzer}
+\end{figure}

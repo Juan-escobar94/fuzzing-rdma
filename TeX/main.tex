@@ -10,6 +10,7 @@
 \usepackage{listings}
 \usepackage{ragged2e}
 \usepackage{titling}
+\usepackage{fullwidth}
 \usepackage[linesnumberedhidden]{algorithm2e}
 
 \definecolor{mGreen}{rgb}{0,0.6,0}
@@ -22,7 +23,6 @@
 \newcommand{\betreuer}{M.Sc. Maksym Planeta}
 \newcommand{\thesistype}{Bachelorarbeit}
 \newcommand{\degreetype}{Bachelor of Science (B.\,Sc.)}
-
 
 \lstdefinestyle{CStylespecial}{
     backgroundcolor=\color{backgroundColour},
@@ -70,7 +70,6 @@
 
 
 
-\begin{document}
 
 \title{Fuzzing Framework for RDMA-networks}
 \author{Juan Andrés Osorio Escobar}
@@ -79,6 +78,7 @@
 
 
 
+\begin{document}
 \include{thesistitle}
 
 \include{chapters/task}
@@ -101,12 +101,11 @@
 \include{chapters/relatedwork}
 \include{chapters/design}
 \include{chapters/implementation}
-\include{chapters/evaluation}
 \include{chapters/discussion}
 \include{chapters/conclussions}
-%\include{appendix/appendices}
 
 \bibliographystyle{acm}
 \bibliography{references.bib}
+\include{appendix/appendices}
 
 \end{document}
